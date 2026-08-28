@@ -41,7 +41,7 @@ function MyPass({ user }: { user: User }) {
       >
         <div>
           <div className="text-[10px] font-bold tracking-[0.28em] text-gold-400 uppercase">
-            Mi pase · Fun House
+            Mi pase · Habemus Juegos
           </div>
           <h1 className="font-display mt-1 text-2xl font-extrabold text-cream-100 sm:text-3xl">
             ¡Hola, {user.name.split(" ")[0]}!

@@ -22,12 +22,24 @@ interface State {
 
 const KEY = "fh-tcg-state-v2";
 
+const migrateBrand = (state: State): State => ({
+  ...state,
+  users: state.users.map((user) => ({
+    ...user,
+    name: user.name === "Admin Fun House" ? "Admin Habemus Juegos" : user.name,
+    rewards: user.rewards.map((reward) => ({
+      ...reward,
+      title: reward.title.replace(/Fun House/g, "Habemus Juegos"),
+    })),
+  })),
+});
+
 const load = (): State => {
   try {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as State;
-      if (parsed && Array.isArray(parsed.users) && parsed.users.length) return parsed;
+      if (parsed && Array.isArray(parsed.users) && parsed.users.length) return migrateBrand(parsed);
     }
   } catch {
     /* seed */

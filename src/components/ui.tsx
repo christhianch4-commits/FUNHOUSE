@@ -19,6 +19,7 @@ import {
   type ResStatus,
   type User,
 } from "../lib/data";
+import habemusJuegosLogo from "../assets/habemus-juegos-logo.svg";
 
 /* ================= Confetti ================= */
 
@@ -164,19 +165,13 @@ export function LogoMark({ className = "h-9 w-9" }: { className?: string }) {
   );
 }
 
-/** Logo real de la tienda: Facebook → versión HD → glifo de respaldo. */
 export function BrandImg({ className = "h-10 w-10" }: { className?: string }) {
-  const [stage, setStage] = useState(0);
-  const sources = [LOGO_FB, LOGO_HD];
-  if (stage >= sources.length) return <LogoMark className={className} />;
   return (
     <img
-      src={sources[stage]}
-      alt="FUN HOUSE TCG"
+      src={habemusJuegosLogo}
+      alt="HABEMUS JUEGOS"
       draggable={false}
-      referrerPolicy="no-referrer"
-      onError={() => setStage((s) => s + 1)}
-      className={`${className} shrink-0 rounded-xl border-2 border-ink-700 bg-ink-850 object-cover`}
+      className={`${className} shrink-0 rounded-lg border-2 border-ink-700 bg-[#eeeeee] object-contain`}
     />
   );
 }
@@ -184,15 +179,7 @@ export function BrandImg({ className = "h-10 w-10" }: { className?: string }) {
 export function Wordmark({ compact = false }: { compact?: boolean }) {
   return (
     <div className="flex items-center gap-2.5">
-      <BrandImg className={compact ? "h-9 w-9" : "h-11 w-11"} />
-      <div className="leading-none">
-        <div className={`font-display font-extrabold tracking-tight text-cream-100 ${compact ? "text-sm" : "text-base"}`}>
-          FUN<span className="text-gold-400">HOUSE</span>
-        </div>
-        <div className="mt-0.5 text-[9px] font-bold tracking-[0.3em] text-ink-400 uppercase">
-          TCG · Quito
-        </div>
-      </div>
+      <BrandImg className={compact ? "h-9 w-auto max-w-[138px]" : "h-11 w-auto max-w-[170px]"} />
     </div>
   );
 }

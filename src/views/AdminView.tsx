@@ -615,7 +615,7 @@ function SummaryTab() {
 
   return (
     <div className="space-y-6">
-      <SectionHead label="Panel de la tienda" title="Resumen Fun House" />
+      <SectionHead label="Panel de la tienda" title="Resumen Habemus Juegos" />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Tile icon={<Users className="h-4 w-4 text-gold-400" />} label="Jugadores" value={String(players.length)} />

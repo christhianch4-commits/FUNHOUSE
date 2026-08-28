@@ -2,8 +2,9 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { motion } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
-import { ArrowRight, Eye, EyeOff, Facebook, Gift, Instagram, MapPin, Package, ShieldCheck, Star, Zap } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Gift, Instagram, Mail, MapPin, Package, ShieldCheck, Star, Zap } from "lucide-react";
 import { useStore } from "../lib/store";
+import { STORE_INFO } from "../lib/data";
 import { useToast, Wordmark, ThemeToggle, BoltGlyph, StarGlyph } from "../components/ui";
 
 export default function AuthView() {
@@ -24,7 +25,7 @@ export default function AuthView() {
       setErr(r);
       setShake((s) => s + 1);
     } else {
-      push(mode === "login" ? "¡Bienvenido de vuelta a la Fun House!" : "¡Cuenta creada! Ya tienes tu pase QR");
+      push(mode === "login" ? "¡Bienvenido de vuelta a Habemus Juegos!" : "¡Cuenta creada! Ya tienes tu pase QR");
     }
   };
 
@@ -102,7 +103,7 @@ export default function AuthView() {
 
         <div className="relative space-y-3">
           <h1 className="font-display max-w-md text-3xl leading-[1.15] font-extrabold text-cream-100">
-            Tu guarida del TCG en Quito, <span className="text-gold-400">ahora en tu bolsillo.</span>
+            Tu tienda de juegos en Ecuador, <span className="text-gold-400">ahora en tu bolsillo.</span>
           </h1>
           <ul className="space-y-2.5 pt-2 text-sm text-ink-300">
             <li className="flex items-center gap-3">
@@ -121,24 +122,24 @@ export default function AuthView() {
               <span className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-pb-400/50 bg-pb-400/10">
                 <Package className="h-4 w-4 text-pb-300" />
               </span>
-              Reserva preventas exclusivas como Pitch Black y paga con QR
+              Encuentra juegos de mesa, rol, TCG, infantiles y accesorios
             </li>
           </ul>
-          <div className="flex items-center gap-4 pt-5 text-xs text-ink-400">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-5 text-xs text-ink-400">
             <span className="flex items-center gap-1.5">
-              <MapPin className="h-3.5 w-3.5 text-coral-400" /> Av. de los Shyris N34-229, Quito
+              <MapPin className="h-3.5 w-3.5 text-coral-400" /> {STORE_INFO.locations}
             </span>
             <a
-              href="https://www.facebook.com/FHTCG/?locale=es_LA"
+              href={`mailto:${STORE_INFO.email}`}
               target="_blank"
               rel="noreferrer"
               className="flex items-center gap-1.5 transition hover:text-gold-300"
             >
-              <Facebook className="h-3.5 w-3.5" /> /FHTCG
+              <Mail className="h-3.5 w-3.5" /> {STORE_INFO.email}
             </a>
-            <span className="flex items-center gap-1.5">
-              <Instagram className="h-3.5 w-3.5" /> @funhouse.tcg
-            </span>
+            <a href={STORE_INFO.instagram} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 transition hover:text-gold-300">
+              <Instagram className="h-3.5 w-3.5" /> @habemusjuegos
+            </a>
           </div>
         </div>
       </div>
@@ -155,7 +156,7 @@ export default function AuthView() {
             <Wordmark />
           </div>
           <h2 className="font-display text-2xl font-extrabold text-cream-100">
-            {mode === "login" ? "Entrar a la Fun House" : "Únete al club"}
+            {mode === "login" ? "Entrar a Habemus Juegos" : "Únete al club"}
           </h2>
           <p className="mt-1.5 text-sm text-ink-300">
             {mode === "login"
@@ -273,7 +274,7 @@ export default function AuthView() {
 
           <p className="mt-5 flex items-center justify-center gap-2 text-center text-xs text-ink-400">
             <Zap className="h-3.5 w-3.5 text-gold-400" />
-            Pokémon · Yu-Gi-Oh! · Magic y más — torneos todas las semanas
+            {STORE_INFO.catalog} · {STORE_INFO.freeShipping}
           </p>
         </motion.div>
       </div>

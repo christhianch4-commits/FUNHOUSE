@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 245" role="img" aria-labelledby="title desc">
+  <title id="title">Habemus Juegos</title>
+  <desc id="desc">Logo de Habemus Juegos con tres hexagonos naranjas y texto negro</desc>
+  <rect width="620" height="210" fill="#eeeeee"/>
+  <g fill="#ff9d1c" stroke="#222222" stroke-width="7" stroke-linejoin="round">
+    <path d="M145 18 199 49v62l-54 31-54-31V49Z"/>
+    <path d="m88 111 54 31v62l-54 31-54-31v-62Z"/>
+    <path d="m202 111 54 31v62l-54 31-54-31v-62Z"/>
+  </g>
+  <g fill="none" stroke="#222222" stroke-width="7" stroke-linecap="round">
+    <path d="M106 57v43"/>
+    <path d="m56 139 37-22"/>
+    <path d="m170 139 37-22"/>
+  </g>
+  <text x="295" y="91" fill="#222222" font-family="Arial, Helvetica, sans-serif" font-size="55" font-weight="300" letter-spacing="1">HABEMUS</text>
+  <text x="312" y="151" fill="#222222" font-family="Arial, Helvetica, sans-serif" font-size="55" font-weight="300" letter-spacing="1">JUEGOS</text>
+</svg>

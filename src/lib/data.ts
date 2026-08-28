@@ -71,10 +71,10 @@ export interface RewardTier {
 
 export const REWARD_TIERS: RewardTier[] = [
   { title: "Sobre Pitch Black", desc: "1 sobre sellado de Mega Evolution — Pitch Black" },
-  { title: "Promo Fun House", desc: "Carta promo exclusiva de la tienda (full art)" },
+  { title: "Promo Habemus Juegos", desc: "Carta promo exclusiva de la tienda (full art)" },
   { title: "$5 de descuento", desc: "Válido en cualquier producto de la tienda" },
   { title: "Bundle de 3 sobres", desc: "Tres sobres Pitch Black para tu colección" },
-  { title: "Playmat Fun House", desc: "Tapete de juego edición Quito" },
+  { title: "Playmat Habemus Juegos", desc: "Tapete de juego edición Quito" },
   { title: "Caja de 12 sobres", desc: "Media display para abrir con tu squad" },
 ];
 
@@ -84,6 +84,18 @@ export const tierForLevel = (level: number): RewardTier =>
 export const VISITS_PER_CARD = 10;
 export const claimableCards = (u: User) =>
   Math.floor(u.visits / VISITS_PER_CARD) - u.cardsCompleted;
+
+export const STORE_INFO = {
+  name: "Habemus Juegos",
+  description: "Tu tienda de juegos de mesa, rol y TCG en Ecuador.",
+  locations: "Quito · Guayaquil",
+  catalog: "Más de 1.100 títulos",
+  categories: "Juegos de mesa · TCG · Rol · Infantiles · Accesorios",
+  email: "hola@habemusjuegos.com",
+  instagram: "https://instagram.com/habemusjuegos",
+  freeShipping: "Envío gratis desde $80",
+  events: "Eventos todas las semanas",
+};
 
 /* ---------- Marca / logo ---------- */
 
@@ -214,7 +226,7 @@ export const daysAgo = (days: number, hour = 15, min = 0) => {
 export const seedUsers = (): User[] => [
   {
     id: "u-admin",
-    name: "Admin Fun House",
+    name: "Admin Habemus Juegos",
     email: "admin@funhouse.ec",
     pass: "admin1234",
     role: "admin",
@@ -284,7 +296,7 @@ export const seedUsers = (): User[] => [
       {
         id: "r-sofia-2",
         level: 2,
-        title: "Promo Fun House",
+        title: "Promo Habemus Juegos",
         code: "PRM-2214",
         requestedAt: daysAgo(1, 19),
         deliveredAt: null,
@@ -319,7 +331,7 @@ export const seedUsers = (): User[] => [
     cardsCompleted: 3,
     rewards: [
       { id: "r-v1", level: 1, title: "Sobre Pitch Black", code: "PRM-9012", requestedAt: daysAgo(40), deliveredAt: daysAgo(39) },
-      { id: "r-v2", level: 2, title: "Promo Fun House", code: "PRM-9130", requestedAt: daysAgo(25), deliveredAt: daysAgo(24) },
+      { id: "r-v2", level: 2, title: "Promo Habemus Juegos", code: "PRM-9130", requestedAt: daysAgo(25), deliveredAt: daysAgo(24) },
       { id: "r-v3", level: 3, title: "$5 de descuento", code: "PRM-9355", requestedAt: daysAgo(6), deliveredAt: daysAgo(5) },
     ],
     createdAt: daysAgo(85),

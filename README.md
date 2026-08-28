@@ -1,6 +1,6 @@
-# FUNHOUSE
+# HABEMUS JUEGOS
 
-Aplicación web para gestión de juego/cliente, construida con React + Vite + TypeScript.
+Aplicación web para fidelización de clientes y reservas de Habemus Juegos, construida con React + Vite + TypeScript.
 
 ## Requisitos
 

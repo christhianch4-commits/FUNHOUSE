@@ -21,6 +21,7 @@ import {
   PB_BANNER_FALLBACK,
   productById,
   PRODUCTS,
+  STORE_INFO,
   shortDate,
   timeAgo,
   type Product,
@@ -94,6 +95,7 @@ export default function Shop({ user }: { user: User }) {
               <Zap className="h-3 w-3" /> Preventa activa
             </span>
             <span className="chip border-pb-400/60 bg-pb-400/10 text-pb-300">Llega en 2–3 semanas</span>
+            <span className="chip border-mint-500/60 bg-mint-500/10 text-mint-300">{STORE_INFO.freeShipping}</span>
           </div>
           <h1 className="font-display max-w-md text-2xl leading-tight font-extrabold text-cream-100 sm:text-4xl">
             Mega Evolution
@@ -101,7 +103,7 @@ export default function Shop({ user }: { user: User }) {
             <span className="text-gold-400">Pitch Black</span>
           </h1>
           <p className="max-w-sm text-sm text-ink-300">
-            Reserva hoy con un toque, paga por transferencia o QR y retira en tienda apenas llegue a Quito.
+            Reserva hoy con un toque, paga por transferencia o QR y retira en tienda. {STORE_INFO.events}.
           </p>
         </div>
       </motion.div>

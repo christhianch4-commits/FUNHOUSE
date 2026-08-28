@@ -23,6 +23,7 @@ import {
 } from "./components/ui";
 import AuthView from "./views/AuthView";
 import PlayerView from "./views/PlayerView";
+import { STORE_INFO } from "./lib/data";
 
 const AdminView = lazy(() => import("./views/AdminView"));
 
@@ -150,9 +151,9 @@ function Shell() {
         <footer className="mt-14 flex flex-wrap items-center justify-between gap-3 border-t-2 border-ink-800 pt-6 text-xs text-ink-500">
           <span className="flex items-center gap-2">
             <Zap className="h-3.5 w-3.5 text-gold-400" />
-            FUN HOUSE TCG · La guarida del TCG en Quito
+            HABEMUS JUEGOS · {STORE_INFO.locations}
           </span>
-          <span>Pokémon · Yu-Gi-Oh! · Magic — torneos cada semana</span>
+          <span>{STORE_INFO.catalog} · {STORE_INFO.events}</span>
         </footer>
       </main>
 
