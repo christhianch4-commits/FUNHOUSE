@@ -1,3 +1,5 @@
 node_modules/
 node_modules/.vite/
 .DS_Store
+.vercel
+.env*
