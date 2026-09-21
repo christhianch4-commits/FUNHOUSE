@@ -145,7 +145,7 @@ export default function AuthView() {
       </div>
 
       {/* Formulario */}
-      <div className="flex items-center justify-center p-5 sm:p-10">
+      <div className="flex items-center justify-center p-5 pt-20 sm:p-10">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}

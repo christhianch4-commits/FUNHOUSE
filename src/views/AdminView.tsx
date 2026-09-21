@@ -393,7 +393,7 @@ function LoyaltyTiersPanel() {
                 Desde {t.visitsRequired} visitas
               </div>
               <input
-                className="input-fh mt-3 text-center text-sm"
+                className="input-fh mt-3 text-center"
                 value={drafts[t.stars] ?? ""}
                 onChange={(e) => setDrafts((d) => ({ ...d, [t.stars]: e.target.value }))}
                 placeholder="Nombre del premio"
@@ -573,7 +573,6 @@ function PlayersTab() {
             <div className="mt-5">
               <label className="label-fh">Monto de la compra (USD)</label>
               <input
-                autoFocus
                 className="input-fh"
                 type="number"
                 min="0"

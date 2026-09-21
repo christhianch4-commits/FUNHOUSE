@@ -104,7 +104,7 @@ function Shell() {
 
       {/* Header */}
       <header className="sticky top-0 z-40 border-b-2 border-ink-800 bg-ink-950/88 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3">
           <div className="shrink-0">
             <Wordmark compact />
           </div>
@@ -130,7 +130,7 @@ function Shell() {
             ))}
           </nav>
 
-          <div className="flex shrink-0 items-center gap-2.5">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2.5">
             <div className="hidden max-w-[160px] text-right lg:block">
               <div className="truncate text-xs leading-tight font-bold whitespace-nowrap text-cream-100">
                 {currentUser.name}
