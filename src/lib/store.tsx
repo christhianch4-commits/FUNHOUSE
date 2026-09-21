@@ -1,14 +1,28 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import {
+  cashbackFor,
+  seedCashbackLog,
+  seedLoyaltyTiers,
+  seedNews,
+  seedProducts,
+  seedPromos,
   seedReservations,
+  seedSplashPromo,
   seedUsers,
   seedVisitLog,
   tierForLevel,
   uid,
   shortCode,
+  type CashbackEntry,
+  type LoyaltyTier,
+  type NewsPost,
+  type Product,
+  type PromoAccent,
+  type PromoSlide,
   type Reservation,
   type ResStatus,
+  type SplashPromo,
   type User,
   type VisitEntry,
 } from "./data";
@@ -17,6 +31,12 @@ interface State {
   users: User[];
   visitLog: VisitEntry[];
   reservations: Reservation[];
+  news: NewsPost[];
+  promos: PromoSlide[];
+  products: Product[];
+  splashPromo: SplashPromo;
+  cashbackLog: CashbackEntry[];
+  loyaltyTiers: LoyaltyTier[];
   sessionId: string | null;
 }
 
@@ -26,11 +46,22 @@ const migrateBrand = (state: State): State => ({
   ...state,
   users: state.users.map((user) => ({
     ...user,
-    name: user.name === "Admin Fun House" ? "Admin Habemus Juegos" : user.name,
+    name:
+      user.name === "Admin Fun House" || user.name === "Admin Habemus Juegos"
+        ? "Admin Panda Mangas"
+        : user.name,
     rewards: user.rewards.map((reward) => ({
       ...reward,
-      title: reward.title.replace(/Fun House/g, "Habemus Juegos"),
+      title: reward.title.replace(/Fun House|Habemus Juegos/g, "Panda Mangas"),
     })),
+    lastSeenNewsAt: user.lastSeenNewsAt ?? null,
+    lastSeenReservationsAt: user.lastSeenReservationsAt ?? null,
+    lastSeenSplashAt: user.lastSeenSplashAt ?? null,
+    cashbackBalance: user.cashbackBalance ?? 0,
+  })),
+  reservations: state.reservations.map((r) => ({
+    ...r,
+    statusUpdatedAt: r.statusUpdatedAt ?? r.paidAt ?? r.createdAt,
   })),
 });
 
@@ -39,7 +70,18 @@ const load = (): State => {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as State;
-      if (parsed && Array.isArray(parsed.users) && parsed.users.length) return migrateBrand(parsed);
+      if (parsed && Array.isArray(parsed.users) && parsed.users.length) {
+        const migrated = migrateBrand(parsed);
+        return {
+          ...migrated,
+          news: migrated.news ?? seedNews(),
+          promos: migrated.promos ?? seedPromos(),
+          products: migrated.products ?? seedProducts(),
+          splashPromo: migrated.splashPromo ?? seedSplashPromo(),
+          cashbackLog: migrated.cashbackLog ?? seedCashbackLog(),
+          loyaltyTiers: migrated.loyaltyTiers ?? seedLoyaltyTiers(),
+        };
+      }
     }
   } catch {
     /* seed */
@@ -48,6 +90,12 @@ const load = (): State => {
     users: seedUsers(),
     visitLog: seedVisitLog(),
     reservations: seedReservations(),
+    news: seedNews(),
+    promos: seedPromos(),
+    products: seedProducts(),
+    splashPromo: seedSplashPromo(),
+    cashbackLog: seedCashbackLog(),
+    loyaltyTiers: seedLoyaltyTiers(),
     sessionId: null,
   };
 };
@@ -72,6 +120,25 @@ interface StoreApi {
   setReservationStatus: (id: string, status: ResStatus) => void;
   userById: (id: string) => User | undefined;
   userName: (id: string) => string;
+  createNewsPost: (title: string, description: string, image: string | null, author: string) => void;
+  deleteNewsPost: (id: string) => void;
+  createPromoSlide: (
+    kicker: string,
+    title: string,
+    subtitle: string,
+    image: string | null,
+    accent: PromoAccent
+  ) => void;
+  deletePromoSlide: (id: string) => void;
+  movePromoSlide: (id: string, direction: -1 | 1) => void;
+  markNewsSeen: (userId: string) => void;
+  markReservationsSeen: (userId: string) => void;
+  createProduct: (name: string, blurb: string, price: number, image: string, stock: number) => void;
+  deleteProduct: (id: string) => void;
+  updateSplashPromo: (active: boolean, image: string | null, title: string, subtitle: string) => void;
+  markSplashSeen: (userId: string) => void;
+  addCashbackFromPurchase: (userId: string, purchaseAmount: number) => number;
+  updateLoyaltyTierPrize: (stars: 1 | 2 | 3, prize: string) => void;
 }
 
 const Ctx = createContext<StoreApi | null>(null);
@@ -123,6 +190,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         createdAt: new Date().toISOString(),
         lastVisitAt: null,
         hue: Math.floor(Math.random() * 360),
+        lastSeenNewsAt: null,
+        lastSeenReservationsAt: null,
+        lastSeenSplashAt: null,
+        cashbackBalance: 0,
       };
       setState((s) => ({ ...s, users: [...s.users, u], sessionId: u.id }));
       return null;
@@ -237,6 +308,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         status: "pendiente_pago",
         createdAt: new Date().toISOString(),
         paidAt: null,
+        statusUpdatedAt: new Date().toISOString(),
       };
       setState((s) => ({ ...s, reservations: [r, ...s.reservations] }));
       return r;
@@ -253,6 +325,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
               ...r,
               status,
               paidAt: status === "pago_por_verificar" ? new Date().toISOString() : r.paidAt,
+              statusUpdatedAt: new Date().toISOString(),
             }
           : r
       ),
@@ -269,6 +342,137 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [state.users]
   );
 
+  const createNewsPost = useCallback(
+    (title: string, description: string, image: string | null, author: string) => {
+      const post: NewsPost = {
+        id: uid("news"),
+        title,
+        description,
+        image,
+        author,
+        createdAt: new Date().toISOString(),
+      };
+      setState((s) => ({ ...s, news: [post, ...s.news] }));
+    },
+    []
+  );
+
+  const deleteNewsPost = useCallback((id: string) => {
+    setState((s) => ({ ...s, news: s.news.filter((n) => n.id !== id) }));
+  }, []);
+
+  const createPromoSlide = useCallback(
+    (kicker: string, title: string, subtitle: string, image: string | null, accent: PromoAccent) => {
+      const slide: PromoSlide = {
+        id: uid("promo"),
+        kicker,
+        title,
+        subtitle,
+        image,
+        accent,
+        createdAt: new Date().toISOString(),
+      };
+      setState((s) => ({ ...s, promos: [...s.promos, slide] }));
+    },
+    []
+  );
+
+  const deletePromoSlide = useCallback((id: string) => {
+    setState((s) => ({ ...s, promos: s.promos.filter((p) => p.id !== id) }));
+  }, []);
+
+  const movePromoSlide = useCallback((id: string, direction: -1 | 1) => {
+    setState((s) => {
+      const idx = s.promos.findIndex((p) => p.id === id);
+      const swapWith = idx + direction;
+      if (idx === -1 || swapWith < 0 || swapWith >= s.promos.length) return s;
+      const next = [...s.promos];
+      [next[idx], next[swapWith]] = [next[swapWith], next[idx]];
+      return { ...s, promos: next };
+    });
+  }, []);
+
+  const markNewsSeen = useCallback((userId: string) => {
+    const now = new Date().toISOString();
+    setState((s) => ({
+      ...s,
+      users: s.users.map((u) => (u.id === userId ? { ...u, lastSeenNewsAt: now } : u)),
+    }));
+  }, []);
+
+  const markReservationsSeen = useCallback((userId: string) => {
+    const now = new Date().toISOString();
+    setState((s) => ({
+      ...s,
+      users: s.users.map((u) => (u.id === userId ? { ...u, lastSeenReservationsAt: now } : u)),
+    }));
+  }, []);
+
+  const createProduct = useCallback(
+    (name: string, blurb: string, price: number, image: string, stock: number) => {
+      const p: Product = {
+        id: uid("prod"),
+        name,
+        blurb,
+        contents: [],
+        price,
+        img: image,
+        fallback: image,
+        stock,
+      };
+      setState((s) => ({ ...s, products: [p, ...s.products] }));
+    },
+    []
+  );
+
+  const deleteProduct = useCallback((id: string) => {
+    setState((s) => ({ ...s, products: s.products.filter((p) => p.id !== id) }));
+  }, []);
+
+  const updateSplashPromo = useCallback(
+    (active: boolean, image: string | null, title: string, subtitle: string) => {
+      setState((s) => ({
+        ...s,
+        splashPromo: { active, image, title, subtitle, updatedAt: new Date().toISOString() },
+      }));
+    },
+    []
+  );
+
+  const markSplashSeen = useCallback((userId: string) => {
+    const now = new Date().toISOString();
+    setState((s) => ({
+      ...s,
+      users: s.users.map((u) => (u.id === userId ? { ...u, lastSeenSplashAt: now } : u)),
+    }));
+  }, []);
+
+  const addCashbackFromPurchase = useCallback((userId: string, purchaseAmount: number) => {
+    const amount = cashbackFor(purchaseAmount);
+    const entry: CashbackEntry = {
+      id: uid("cb"),
+      userId,
+      purchaseAmount,
+      cashbackAmount: amount,
+      createdAt: new Date().toISOString(),
+    };
+    setState((s) => ({
+      ...s,
+      users: s.users.map((u) =>
+        u.id === userId ? { ...u, cashbackBalance: Math.round((u.cashbackBalance + amount) * 100) / 100 } : u
+      ),
+      cashbackLog: [entry, ...s.cashbackLog],
+    }));
+    return amount;
+  }, []);
+
+  const updateLoyaltyTierPrize = useCallback((stars: 1 | 2 | 3, prize: string) => {
+    setState((s) => ({
+      ...s,
+      loyaltyTiers: s.loyaltyTiers.map((t) => (t.stars === stars ? { ...t, prize } : t)),
+    }));
+  }, []);
+
   const api: StoreApi = {
     state,
     currentUser,
@@ -283,6 +487,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     createReservation,
     setReservationStatus,
     userById,
+    createNewsPost,
+    deleteNewsPost,
+    createPromoSlide,
+    deletePromoSlide,
+    movePromoSlide,
+    markNewsSeen,
+    markReservationsSeen,
+    createProduct,
+    deleteProduct,
+    updateSplashPromo,
+    markSplashSeen,
+    addCashbackFromPurchase,
+    updateLoyaltyTierPrize,
     userName,
   };
 

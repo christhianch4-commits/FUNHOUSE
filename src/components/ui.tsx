@@ -12,14 +12,43 @@ import confetti from "canvas-confetti";
 import { AlertTriangle, Check, Copy, Moon, Package, Sparkles, Sun, X } from "lucide-react";
 import {
   claimableCards,
-  LOGO_FB,
-  LOGO_HD,
   tierForLevel,
   VISITS_PER_CARD,
   type ResStatus,
   type User,
 } from "../lib/data";
-import habemusJuegosLogo from "../assets/habemus-juegos-logo.svg";
+import pandaHeadClean from "../assets/panda-mangas/panda-head-outlined.png";
+
+/* ================= Imagen: lectura y compresión ================= */
+
+/** Redimensiona y comprime una foto en el navegador antes de guardarla (evita saturar el almacenamiento local). */
+export function readAndCompressImage(file: File, maxDim = 1280, quality = 0.82): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(reader.error);
+    reader.onload = () => {
+      const img = new Image();
+      img.onerror = () => reject(new Error("No se pudo leer la imagen"));
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          const scale = maxDim / Math.max(width, height);
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject(new Error("Canvas no disponible"));
+        ctx.drawImage(img, 0, 0, width, height);
+        resolve(canvas.toDataURL("image/jpeg", quality));
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 /* ================= Confetti ================= */
 
@@ -28,7 +57,7 @@ export const confettiBurst = (colors?: string[]) => {
     particleCount: 150,
     spread: 78,
     origin: { y: 0.62 },
-    colors: colors ?? ["#FFC94D", "#4FDCC0", "#FF7A6B", "#C4ADFF", "#F6EFDD"],
+    colors: colors ?? ["#55D957", "#4FDCC0", "#FF7A6B", "#C4ADFF", "#F6EFDD"],
     disableForReducedMotion: true,
   });
 };
@@ -115,7 +144,7 @@ export function Modal({
     <AnimatePresence>
       {open && (
         <motion.div
-          className="fixed inset-0 z-[110] flex items-end justify-center bg-[#060d12]/85 p-0 backdrop-blur-[3px] sm:items-center sm:p-6"
+          className="fixed inset-0 z-[110] flex items-end justify-center bg-[#070f0a]/85 p-0 backdrop-blur-[3px] sm:items-center sm:p-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -151,27 +180,36 @@ export function Modal({
 export function LogoMark({ className = "h-9 w-9" }: { className?: string }) {
   return (
     <svg viewBox="0 0 64 64" className={className} aria-hidden>
-      <rect x="2" y="2" width="60" height="60" rx="15" fill="#0F1E27" stroke="#2B4D5E" strokeWidth="2.5" />
+      <rect x="2" y="2" width="60" height="60" rx="15" fill="#102417" stroke="#2C5C39" strokeWidth="2.5" />
       <path
         d="M32 10 53 25.5V50a3.5 3.5 0 0 1-3.5 3.5h-35A3.5 3.5 0 0 1 11 50V25.5Z"
         fill="none"
-        stroke="#FFC94D"
+        stroke="#55D957"
         strokeWidth="3.6"
         strokeLinejoin="round"
       />
-      <path d="M35.5 21 23 38.5h7.2L26 52l14.5-18.5h-7.4Z" fill="#FFC94D" />
+      <path d="M35.5 21 23 38.5h7.2L26 52l14.5-18.5h-7.4Z" fill="#55D957" />
       <circle cx="47" cy="17" r="3" fill="#4FDCC0" />
     </svg>
   );
 }
 
-export function BrandImg({ className = "h-10 w-10" }: { className?: string }) {
+/** Cabeza del panda: silueta limpia recortada del logo original del cliente (sin hojas de bambú). */
+export function PandaHeadGlyph({ className = "h-10 w-10" }: { className?: string }) {
   return (
     <img
-      src={habemusJuegosLogo}
-      alt="HABEMUS JUEGOS"
+      src={pandaHeadClean}
+      alt="Panda Mangas Ecuador"
       draggable={false}
-      className={`${className} shrink-0 rounded-lg border-2 border-ink-700 bg-[#eeeeee] object-contain`}
+      className={`${className} object-contain`}
+    />
+  );
+}
+
+export function BrandImg({ className = "h-10 w-10" }: { className?: string }) {
+  return (
+    <PandaHeadGlyph
+      className={`${className} shrink-0 drop-shadow-[2px_4px_0_var(--t-shadow)]`}
     />
   );
 }
@@ -179,7 +217,15 @@ export function BrandImg({ className = "h-10 w-10" }: { className?: string }) {
 export function Wordmark({ compact = false }: { compact?: boolean }) {
   return (
     <div className="flex items-center gap-2.5">
-      <BrandImg className={compact ? "h-9 w-auto max-w-[138px]" : "h-11 w-auto max-w-[170px]"} />
+      <BrandImg className={compact ? "h-12 w-12" : "h-20 w-20"} />
+      <div className="leading-none">
+        <div className={`font-display font-extrabold text-cream-100 ${compact ? "text-base" : "text-xl"}`}>
+          Panda<span className="text-gold-400">Mangas</span>
+        </div>
+        <div className="mt-0.5 text-[9px] font-bold tracking-[0.3em] text-ink-300 uppercase">
+          Mangas · Ecuador
+        </div>
+      </div>
     </div>
   );
 }
@@ -196,7 +242,7 @@ export function ThemeToggle() {
     document.documentElement.classList.toggle("light", next);
     document
       .querySelector('meta[name="theme-color"]')
-      ?.setAttribute("content", next ? "#e7edf1" : "#060d12");
+      ?.setAttribute("content", next ? "#eaf1ea" : "#070f0a");
     try {
       localStorage.setItem("fh-theme", next ? "light" : "dark");
     } catch {
@@ -373,7 +419,7 @@ export function StampCard({ user, onClaim }: { user: User; onClaim: () => void }
               style={on ? { animationDelay: `${i * 45}ms` } : undefined}
             >
               {on ? (
-                <StarGlyph className="h-1/2 w-1/2 text-ink-950 drop-shadow-sm" />
+                <PandaHeadGlyph className="h-4/5 w-4/5 drop-shadow-sm" />
               ) : (
                 <span className="font-display text-[10px] font-bold text-ink-500">{i + 1}</span>
               )}

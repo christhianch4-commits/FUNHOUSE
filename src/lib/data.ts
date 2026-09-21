@@ -1,3 +1,5 @@
+import promoDemoImage from "../assets/panda-mangas/promo-demo.jpg";
+
 export type Role = "admin" | "player";
 
 export interface PendingReward {
@@ -22,12 +24,65 @@ export interface User {
   createdAt: string;
   lastVisitAt: string | null;
   hue: number;
+  lastSeenNewsAt: string | null;
+  lastSeenReservationsAt: string | null;
+  lastSeenSplashAt: string | null;
+  cashbackBalance: number;
 }
 
 export interface VisitEntry {
   id: string;
   userId: string;
   at: string;
+}
+
+/* ---------- Cashback (5% automático por compra) ---------- */
+
+export const CASHBACK_RATE = 0.05;
+
+export const cashbackFor = (purchaseAmount: number) =>
+  Math.round(purchaseAmount * CASHBACK_RATE * 100) / 100;
+
+export interface CashbackEntry {
+  id: string;
+  userId: string;
+  purchaseAmount: number;
+  cashbackAmount: number;
+  createdAt: string;
+}
+
+/* ---------- Muro de noticias (torneos, cups, ganadores) ---------- */
+
+export interface NewsPost {
+  id: string;
+  title: string;
+  description: string;
+  image: string | null;
+  author: string;
+  createdAt: string;
+}
+
+/* ---------- Banner giratorio (promos, reservas, publicidad) ---------- */
+
+export type PromoAccent = "gold" | "mint" | "coral" | "pb";
+
+export interface PromoSlide {
+  id: string;
+  kicker: string;
+  title: string;
+  subtitle: string;
+  image: string | null;
+  accent: PromoAccent;
+  createdAt: string;
+}
+
+/** Promo del mes/temporada: aparece como bienvenida al abrir la app. */
+export interface SplashPromo {
+  active: boolean;
+  image: string | null;
+  title: string;
+  subtitle: string;
+  updatedAt: string;
 }
 
 export type ResStatus =
@@ -48,6 +103,7 @@ export interface Reservation {
   status: ResStatus;
   createdAt: string;
   paidAt: string | null;
+  statusUpdatedAt: string;
 }
 
 export interface Product {
@@ -70,11 +126,11 @@ export interface RewardTier {
 }
 
 export const REWARD_TIERS: RewardTier[] = [
-  { title: "Sobre Pitch Black", desc: "1 sobre sellado de Mega Evolution — Pitch Black" },
-  { title: "Promo Habemus Juegos", desc: "Carta promo exclusiva de la tienda (full art)" },
+  { title: "Sobre de Prize Pack 9", desc: "1 sobre sellado de Prize Pack 9" },
+  { title: "Promo Panda Mangas", desc: "Carta promo exclusiva de la tienda (full art)" },
   { title: "$5 de descuento", desc: "Válido en cualquier producto de la tienda" },
   { title: "Bundle de 3 sobres", desc: "Tres sobres Pitch Black para tu colección" },
-  { title: "Playmat Habemus Juegos", desc: "Tapete de juego edición Quito" },
+  { title: "Playmat Panda Mangas", desc: "Tapete de juego edición Quito" },
   { title: "Caja de 12 sobres", desc: "Media display para abrir con tu squad" },
 ];
 
@@ -85,37 +141,74 @@ export const VISITS_PER_CARD = 10;
 export const claimableCards = (u: User) =>
   Math.floor(u.visits / VISITS_PER_CARD) - u.cardsCompleted;
 
-export const STORE_INFO = {
-  name: "Habemus Juegos",
-  description: "Tu tienda de juegos de mesa, rol y TCG en Ecuador.",
-  locations: "Quito · Guayaquil",
-  catalog: "Más de 1.100 títulos",
-  categories: "Juegos de mesa · TCG · Rol · Infantiles · Accesorios",
-  email: "hola@habemusjuegos.com",
-  instagram: "https://instagram.com/habemusjuegos",
-  freeShipping: "Envío gratis desde $80",
-  events: "Eventos todas las semanas",
+/* ---------- Niveles de fidelidad (estrellas doradas por visitas acumuladas) ---------- */
+
+export interface LoyaltyTier {
+  stars: 1 | 2 | 3;
+  visitsRequired: number;
+  prize: string;
+}
+
+export const seedLoyaltyTiers = (): LoyaltyTier[] => [
+  { stars: 1, visitsRequired: 25, prize: "Sobre de cortesía sorpresa" },
+  { stars: 2, visitsRequired: 75, prize: "Playmat exclusivo Panda Mangas" },
+  { stars: 3, visitsRequired: 150, prize: "Caja premium + envío gratis de por vida" },
+];
+
+export const currentLoyaltyTier = (visits: number, tiers: LoyaltyTier[]): LoyaltyTier | null => {
+  const reached = tiers.filter((t) => visits >= t.visitsRequired);
+  if (reached.length === 0) return null;
+  return reached.reduce((a, b) => (b.stars > a.stars ? b : a));
 };
 
-/* ---------- Marca / logo ---------- */
+export const nextLoyaltyTier = (visits: number, tiers: LoyaltyTier[]): LoyaltyTier | null => {
+  const upcoming = tiers.filter((t) => visits < t.visitsRequired);
+  if (upcoming.length === 0) return null;
+  return upcoming.reduce((a, b) => (b.visitsRequired < a.visitsRequired ? b : a));
+};
 
-/** Foto de perfil real de la página de Facebook (endpoint público estable). */
-export const LOGO_FB = "https://graph.facebook.com/FHTCG/picture?type=large";
-/** Logo remasterizado en HD (respaldo si Facebook no responde). */
-export const LOGO_HD =
-  "https://image.qwenlm.ai/generated-images/2b5b12b1-9c6d-428e-ae4b-396b307a79b7/_result.png";
+/* ---------- Indicadores de "novedad" (badges de navegación) ---------- */
+
+const RESERVATION_NOTABLE: ResStatus[] = ["pago_confirmado", "listo_retiro"];
+
+export const hasNewsBadge = (user: User, news: NewsPost[]): boolean => {
+  if (news.length === 0) return false;
+  const latest = news.reduce((a, b) => (a.createdAt > b.createdAt ? a : b));
+  return !user.lastSeenNewsAt || latest.createdAt > user.lastSeenNewsAt;
+};
+
+export const hasReservationBadge = (user: User, reservations: Reservation[]): boolean =>
+  reservations.some(
+    (r) =>
+      r.userId === user.id &&
+      RESERVATION_NOTABLE.includes(r.status) &&
+      (!user.lastSeenReservationsAt || r.statusUpdatedAt > user.lastSeenReservationsAt)
+  );
+
+export const shouldShowSplash = (user: User, splash: SplashPromo): boolean =>
+  splash.active &&
+  !!splash.image &&
+  (!user.lastSeenSplashAt || splash.updatedAt > user.lastSeenSplashAt);
+
+export const STORE_INFO = {
+  name: "Panda Mangas Ecuador",
+  description: "Tu tienda otaku de manga, anime, TCG y coleccionables en Ecuador.",
+  locations: "Valle de los Chillos · Doral · Quicentro Sur",
+  catalog: "Más de 120 títulos",
+  categories: "Mangas · Pokémon TCG · Funkos · Figuras · Moda otaku · Accesorios",
+  email: "hola@pandamangasecuador.com",
+  instagram: "https://www.instagram.com/panda.mangas.ecuador/",
+  freeShipping: "Envíos a todo Ecuador",
+  events: "Novedades cada semana",
+};
 
 /* ---------- Catálogo: Mega Evolution — Pitch Black ---------- */
 /* Fotos reales de producto (referencia: Kantocards) + arte de respaldo */
 
 const K = "https://kantocards.com/cdn/shop/files";
-export const PB_BANNER = `${K}/FONDO-colecciones-pc_copia_1.png?v=1773354015&width=1600`;
-export const PB_BANNER_FALLBACK =
-  "https://image.qwenlm.ai/generated-images/b7547ba2-a86f-4f4a-b427-ebd217ee311a/_result.png";
-
 const GEN = "https://image.qwenlm.ai/generated-images";
 
-export const PRODUCTS: Product[] = [
+export const seedProducts = (): Product[] => [
   {
     id: "pb-display",
     name: "Booster Display · 36 sobres",
@@ -171,7 +264,7 @@ export const PRODUCTS: Product[] = [
   },
 ];
 
-export const productById = (id: string) => PRODUCTS.find((p) => p.id === id);
+export const productById = (products: Product[], id: string) => products.find((p) => p.id === id);
 
 /* ---------- Datos de pago (transferencia / QR) ---------- */
 
@@ -179,14 +272,14 @@ export const PAYMENT = {
   bank: "Banco Pichincha",
   accountType: "Cuenta de Ahorros",
   account: "2100 458 731",
-  holder: "FUN HOUSE TCG CIA. LTDA.",
+  holder: "PANDA MANGAS ECUADOR",
   ruc: "1792-445667-001",
-  email: "pagos@funhousetcg.ec",
-  whatsapp: "099 555 2030",
+  email: "pagos@pandamangasecuador.com",
+  whatsapp: "099 971 9583",
 };
 
 export const payQrPayload = (code: string, total: number) =>
-  `FUNHOUSE-PAY|${code}|USD ${total.toFixed(2)}|${PAYMENT.bank.toUpperCase()} AHORROS ${PAYMENT.account.replace(/\s/g, "")}|${PAYMENT.holder}`;
+  `PANDAMANGAS-PAY|${code}|USD ${total.toFixed(2)}|${PAYMENT.bank.toUpperCase()} AHORROS ${PAYMENT.account.replace(/\s/g, "")}|${PAYMENT.holder}`;
 
 /* ---------- Helpers ---------- */
 
@@ -226,7 +319,7 @@ export const daysAgo = (days: number, hour = 15, min = 0) => {
 export const seedUsers = (): User[] => [
   {
     id: "u-admin",
-    name: "Admin Habemus Juegos",
+    name: "Admin Panda Mangas",
     email: "admin@funhouse.ec",
     pass: "admin1234",
     role: "admin",
@@ -237,6 +330,10 @@ export const seedUsers = (): User[] => [
     createdAt: daysAgo(90),
     lastVisitAt: null,
     hue: 42,
+    lastSeenNewsAt: null,
+    lastSeenReservationsAt: null,
+    lastSeenSplashAt: null,
+    cashbackBalance: 0,
   },
   {
     id: "u-demo",
@@ -251,6 +348,10 @@ export const seedUsers = (): User[] => [
     createdAt: daysAgo(34),
     lastVisitAt: daysAgo(2, 18),
     hue: 320,
+    lastSeenNewsAt: null,
+    lastSeenReservationsAt: null,
+    lastSeenSplashAt: null,
+    cashbackBalance: 3.25,
   },
   {
     id: "u-mateo",
@@ -274,6 +375,10 @@ export const seedUsers = (): User[] => [
     createdAt: daysAgo(60),
     lastVisitAt: daysAgo(1, 17),
     hue: 200,
+    lastSeenNewsAt: null,
+    lastSeenReservationsAt: null,
+    lastSeenSplashAt: null,
+    cashbackBalance: 8.75,
   },
   {
     id: "u-sofia",
@@ -305,6 +410,10 @@ export const seedUsers = (): User[] => [
     createdAt: daysAgo(80),
     lastVisitAt: daysAgo(1, 19),
     hue: 150,
+    lastSeenNewsAt: null,
+    lastSeenReservationsAt: null,
+    lastSeenSplashAt: null,
+    cashbackBalance: 0,
   },
   {
     id: "u-juan",
@@ -319,6 +428,10 @@ export const seedUsers = (): User[] => [
     createdAt: daysAgo(12),
     lastVisitAt: daysAgo(3, 16),
     hue: 20,
+    lastSeenNewsAt: null,
+    lastSeenReservationsAt: null,
+    lastSeenSplashAt: null,
+    cashbackBalance: 0,
   },
   {
     id: "u-valen",
@@ -337,6 +450,10 @@ export const seedUsers = (): User[] => [
     createdAt: daysAgo(85),
     lastVisitAt: daysAgo(0, 12),
     hue: 265,
+    lastSeenNewsAt: null,
+    lastSeenReservationsAt: null,
+    lastSeenSplashAt: null,
+    cashbackBalance: 15.4,
   },
   {
     id: "u-andres",
@@ -351,6 +468,10 @@ export const seedUsers = (): User[] => [
     createdAt: daysAgo(8),
     lastVisitAt: daysAgo(4, 15),
     hue: 95,
+    lastSeenNewsAt: null,
+    lastSeenReservationsAt: null,
+    lastSeenSplashAt: null,
+    cashbackBalance: 0,
   },
   {
     id: "u-cami",
@@ -367,6 +488,10 @@ export const seedUsers = (): User[] => [
     createdAt: daysAgo(50),
     lastVisitAt: daysAgo(2, 19),
     hue: 15,
+    lastSeenNewsAt: null,
+    lastSeenReservationsAt: null,
+    lastSeenSplashAt: null,
+    cashbackBalance: 0,
   },
   {
     id: "u-nico",
@@ -381,6 +506,10 @@ export const seedUsers = (): User[] => [
     createdAt: daysAgo(28),
     lastVisitAt: daysAgo(0, 11),
     hue: 185,
+    lastSeenNewsAt: null,
+    lastSeenReservationsAt: null,
+    lastSeenSplashAt: null,
+    cashbackBalance: 0,
   },
 ];
 
@@ -413,6 +542,7 @@ export const seedReservations = (): Reservation[] => [
     status: "pago_por_verificar",
     createdAt: daysAgo(1, 18),
     paidAt: daysAgo(1, 18),
+    statusUpdatedAt: daysAgo(1, 18),
   },
   {
     id: "res-mateo-1",
@@ -424,6 +554,7 @@ export const seedReservations = (): Reservation[] => [
     status: "pago_confirmado",
     createdAt: daysAgo(4, 16),
     paidAt: daysAgo(4, 17),
+    statusUpdatedAt: daysAgo(0, 9),
   },
   {
     id: "res-valen-1",
@@ -435,5 +566,96 @@ export const seedReservations = (): Reservation[] => [
     status: "listo_retiro",
     createdAt: daysAgo(12, 15),
     paidAt: daysAgo(12, 16),
+    statusUpdatedAt: daysAgo(0, 10),
   },
 ];
+
+export const seedCashbackLog = (): CashbackEntry[] => [
+  {
+    id: "cb-demo-1",
+    userId: "u-demo",
+    purchaseAmount: 65,
+    cashbackAmount: 3.25,
+    createdAt: daysAgo(1, 18),
+  },
+  {
+    id: "cb-mateo-1",
+    userId: "u-mateo",
+    purchaseAmount: 175,
+    cashbackAmount: 8.75,
+    createdAt: daysAgo(4, 17),
+  },
+  {
+    id: "cb-valen-1",
+    userId: "u-valen",
+    purchaseAmount: 220,
+    cashbackAmount: 11,
+    createdAt: daysAgo(20, 12),
+  },
+  {
+    id: "cb-valen-2",
+    userId: "u-valen",
+    purchaseAmount: 88,
+    cashbackAmount: 4.4,
+    createdAt: daysAgo(6, 15),
+  },
+];
+
+export const seedNews = (): NewsPost[] => [
+  {
+    id: "news-1",
+    title: "Torneo Pokémon TCG — ¡Tenemos ganador! 🏆",
+    description:
+      "Gracias a todos los que llegaron al torneo del sábado. Felicidades a Mateo por llevarse la caja de sobres Pitch Black.",
+    image: null,
+    author: "Panda Mangas",
+    createdAt: daysAgo(3, 19),
+  },
+  {
+    id: "news-2",
+    title: "Nuevo horario de cups semanales",
+    description:
+      "A partir de este mes las cups de TCG serán todos los sábados desde las 15h00 en el local del Valle de los Chillos. ¡Trae tu mazo!",
+    image: null,
+    author: "Panda Mangas",
+    createdAt: daysAgo(10, 12),
+  },
+];
+
+export const seedPromos = (): PromoSlide[] => [
+  {
+    id: "promo-1",
+    kicker: "Preventa activa",
+    title: "Mega Evolution — Pitch Black",
+    subtitle: "Reserva hoy con un toque, paga por transferencia o QR y retira en tienda.",
+    image: null,
+    accent: "gold",
+    createdAt: daysAgo(5, 10),
+  },
+  {
+    id: "promo-2",
+    kicker: "Reserva ya",
+    title: "Cups de TCG todos los sábados",
+    subtitle: "Cupos limitados en el local del Valle de los Chillos. Escríbenos por WhatsApp para apartar el tuyo.",
+    image: null,
+    accent: "mint",
+    createdAt: daysAgo(4, 9),
+  },
+  {
+    id: "promo-3",
+    kicker: "Novedad",
+    title: "Nuevo restock de mangas y funkos",
+    subtitle: "Llegaron títulos nuevos de One Piece, Jujutsu Kaisen y más. Pásate a verlos en tienda.",
+    image: null,
+    accent: "coral",
+    createdAt: daysAgo(2, 11),
+  },
+];
+
+export const seedSplashPromo = (): SplashPromo => ({
+  active: true,
+  image: promoDemoImage,
+  title: "¡Promo de septiembre!",
+  subtitle: "20% OFF en figuras, funkos y TCG seleccionado",
+  updatedAt: daysAgo(1),
+});

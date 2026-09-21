@@ -25,7 +25,7 @@ export default function AuthView() {
       setErr(r);
       setShake((s) => s + 1);
     } else {
-      push(mode === "login" ? "¡Bienvenido de vuelta a Habemus Juegos!" : "¡Cuenta creada! Ya tienes tu pase QR");
+      push(mode === "login" ? "¡Bienvenido de vuelta a Panda Mangas!" : "¡Cuenta creada! Ya tienes tu pase QR");
     }
   };
 
@@ -103,7 +103,7 @@ export default function AuthView() {
 
         <div className="relative space-y-3">
           <h1 className="font-display max-w-md text-3xl leading-[1.15] font-extrabold text-cream-100">
-            Tu tienda de juegos en Ecuador, <span className="text-gold-400">ahora en tu bolsillo.</span>
+            Tu tienda otaku en Ecuador, <span className="text-gold-400">ahora en tu bolsillo.</span>
           </h1>
           <ul className="space-y-2.5 pt-2 text-sm text-ink-300">
             <li className="flex items-center gap-3">
@@ -122,7 +122,7 @@ export default function AuthView() {
               <span className="flex h-8 w-8 items-center justify-center rounded-lg border-2 border-pb-400/50 bg-pb-400/10">
                 <Package className="h-4 w-4 text-pb-300" />
               </span>
-              Encuentra juegos de mesa, rol, TCG, infantiles y accesorios
+              Encuentra mangas, Pokémon TCG, funkos y accesorios otaku
             </li>
           </ul>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-5 text-xs text-ink-400">
@@ -138,7 +138,7 @@ export default function AuthView() {
               <Mail className="h-3.5 w-3.5" /> {STORE_INFO.email}
             </a>
             <a href={STORE_INFO.instagram} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 transition hover:text-gold-300">
-              <Instagram className="h-3.5 w-3.5" /> @habemusjuegos
+              <Instagram className="h-3.5 w-3.5" /> @panda.mangas.ecuador
             </a>
           </div>
         </div>
@@ -156,7 +156,7 @@ export default function AuthView() {
             <Wordmark />
           </div>
           <h2 className="font-display text-2xl font-extrabold text-cream-100">
-            {mode === "login" ? "Entrar a Habemus Juegos" : "Únete al club"}
+            {mode === "login" ? "Entrar a Panda Mangas" : "Únete al club"}
           </h2>
           <p className="mt-1.5 text-sm text-ink-300">
             {mode === "login"

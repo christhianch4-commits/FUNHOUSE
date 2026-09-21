@@ -1,8 +1,8 @@
 import { motion } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
-import { CalendarDays, Check, Gift, QrCode, Sparkles } from "lucide-react";
+import { CalendarDays, Check, Gift, PiggyBank, QrCode, Sparkles, Star } from "lucide-react";
 import { useStore } from "../lib/store";
-import { claimableCards, shortDate, timeAgo, tierForLevel, type User } from "../lib/data";
+import { claimableCards, fmtUSD, shortDate, timeAgo, tierForLevel, type User } from "../lib/data";
 import { confettiBurst, SectionHead, StampCard, useToast } from "../components/ui";
 import Shop, { MyReservations } from "./ShopView";
 
@@ -15,7 +15,7 @@ export default function PlayerView({ tab, setTab }: { tab: string; setTab: (t: s
 }
 
 function MyPass({ user }: { user: User }) {
-  const { requestReward } = useStore();
+  const { state, requestReward } = useStore();
   const { push } = useToast();
   const claimable = claimableCards(user) > 0;
   const nextLevel = user.cardsCompleted + 1;
@@ -41,7 +41,7 @@ function MyPass({ user }: { user: User }) {
       >
         <div>
           <div className="text-[10px] font-bold tracking-[0.28em] text-gold-400 uppercase">
-            Mi pase · Habemus Juegos
+            Mi pase · Panda Mangas Ecuador
           </div>
           <h1 className="font-display mt-1 text-2xl font-extrabold text-cream-100 sm:text-3xl">
             ¡Hola, {user.name.split(" ")[0]}!
@@ -76,6 +76,15 @@ function MyPass({ user }: { user: User }) {
           <div className="mt-4 flex justify-center rounded-xl bg-[#f6efdd] p-5">
             <QRCodeSVG value={`FH:${user.id}`} size={176} fgColor="#0B161D" bgColor="#F6EFDD" level="M" />
           </div>
+
+          <div className="mt-3 flex items-center justify-center gap-2 rounded-lg border-2 border-mint-500/40 bg-mint-500/10 px-4 py-2.5">
+            <PiggyBank className="h-4 w-4 shrink-0 text-mint-400" />
+            <span className="text-[11px] font-bold tracking-wide text-mint-300 uppercase">Cashback disponible</span>
+            <span className="font-display ml-auto text-lg font-extrabold text-mint-300">
+              {fmtUSD(user.cashbackBalance)}
+            </span>
+          </div>
+
           <div className="mt-4 text-center">
             <div className="font-display text-lg font-extrabold text-cream-100">{user.name}</div>
             <div className="mt-0.5 font-mono text-sm font-bold tracking-widest text-gold-300">{user.code}</div>
@@ -112,9 +121,9 @@ function MyPass({ user }: { user: User }) {
               </div>
             </div>
             <div className="ml-auto hidden text-right text-xs text-ink-400 sm:block">
-              Pokémon · Yu-Gi-Oh!
+              Pokémon TCG · Mangas
               <br />
-              Magic y más
+              Funkos y más
             </div>
           </div>
         </motion.div>
@@ -128,7 +137,7 @@ function MyPass({ user }: { user: User }) {
             <Gift className="h-8 w-8 text-ink-500" />
             <p className="text-sm font-semibold text-ink-300">Aún no has canjeado premios.</p>
             <p className="max-w-sm text-xs text-ink-400">
-              Completa tu primera tarjeta de 10 sellos y podrás reclamar un sobre Pitch Black de cortesía.
+              Completa tu primera tarjeta de 10 sellos y podrás reclamar un sobre de Prize Pack 9 de cortesía.
             </p>
           </div>
         ) : (
@@ -178,6 +187,51 @@ function MyPass({ user }: { user: User }) {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Niveles de fidelidad */}
+      <div>
+        <SectionHead label="Fidelidad" title="Niveles por visitas acumuladas" />
+        <div className="grid gap-3 sm:grid-cols-3">
+          {[...state.loyaltyTiers]
+            .sort((a, b) => a.stars - b.stars)
+            .map((t, i) => {
+              const reached = user.visits >= t.visitsRequired;
+              return (
+                <motion.div
+                  key={t.stars}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.06 }}
+                  className={`card-flat p-4 text-center ${reached ? "border-gold-500/60" : ""}`}
+                >
+                  <div className="flex items-center justify-center gap-1">
+                    {[1, 2, 3].map((n) => (
+                      <Star
+                        key={n}
+                        className={`h-5 w-5 ${
+                          n <= t.stars ? (reached ? "fill-gold-400 text-gold-400" : "text-ink-600") : "text-ink-700"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <div className="mt-2 text-[10px] font-bold tracking-[0.14em] text-ink-400 uppercase">
+                    {t.visitsRequired} visitas
+                  </div>
+                  <div className="font-display mt-1 truncate text-sm font-bold text-cream-100">{t.prize}</div>
+                  {reached ? (
+                    <span className="chip mt-2.5 border-mint-500/60 bg-mint-500/10 text-mint-300">
+                      <Check className="h-3 w-3" strokeWidth={3} /> Desbloqueado
+                    </span>
+                  ) : (
+                    <div className="mt-2.5 text-[11px] text-ink-400">
+                      Te faltan <b className="text-cream-100">{t.visitsRequired - user.visits}</b> visitas
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
+        </div>
       </div>
 
       {/* Actividad reciente */}

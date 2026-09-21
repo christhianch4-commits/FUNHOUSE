@@ -1,56 +1,56 @@
 @import "tailwindcss";
 
-/* ============ Tokens de tema (noche por defecto / día con .light) ============ */
+/* ============ Tokens de tema — Panda Mangas Ecuador (noche por defecto / día con .light) ============ */
 :root {
   color-scheme: dark;
-  --t-page: #060d12;
-  --t-s1: #0b161d;
-  --t-s2: #0f1e27;
-  --t-s3: #142733;
-  --t-line: #1d3644;
-  --t-line2: #2b4d5e;
-  --t-mute: #3f6b80;
-  --t-soft: #6c93a6;
-  --t-label: #9fbbc8;
+  --t-page: #070f0a;
+  --t-s1: #0c1a12;
+  --t-s2: #102417;
+  --t-s3: #16301e;
+  --t-line: #1e4128;
+  --t-line2: #2c5c39;
+  --t-mute: #417d54;
+  --t-soft: #6ba87e;
+  --t-label: #a0c9ac;
   --t-text: #f6efdd;
   --t-text2: #e4d9be;
   --t-text3: #c9bc97;
-  --t-gold300: #ffd97a;
-  --t-gold400: #ffc94d;
+  --t-gold300: #86e089;
+  --t-gold400: #55d957;
   --t-mint300: #8ff0dc;
   --t-mint400: #4fdcc0;
   --t-coral300: #ffa196;
   --t-coral400: #ff7a6b;
   --t-pb300: #c4adff;
-  --t-shadow: rgba(2, 7, 11, 0.9);
-  --t-pulse: rgba(255, 201, 77, 0.55);
-  --t-dot: rgba(108, 147, 166, 0.13);
+  --t-shadow: rgba(3, 10, 6, 0.9);
+  --t-pulse: rgba(85, 217, 87, 0.55);
+  --t-dot: rgba(90, 150, 100, 0.13);
 }
 
 html.light {
   color-scheme: light;
-  --t-page: #e7edf1;
-  --t-s1: #dce4ea;
-  --t-s2: #f9fafb;
-  --t-s3: #edf1f4;
-  --t-line: #c3d1da;
-  --t-line2: #a4b8c5;
-  --t-mute: #869dac;
-  --t-soft: #5d7789;
-  --t-label: #476175;
-  --t-text: #15232e;
-  --t-text2: #2c4253;
-  --t-text3: #48606f;
-  --t-gold300: #7c5c02;
-  --t-gold400: #9a7205;
+  --t-page: #eaf1ea;
+  --t-s1: #dfe9e0;
+  --t-s2: #f8faf8;
+  --t-s3: #eef4ee;
+  --t-line: #c6d9c9;
+  --t-line2: #a7c3ac;
+  --t-mute: #87a98d;
+  --t-soft: #5e8265;
+  --t-label: #476b4d;
+  --t-text: #16241a;
+  --t-text2: #2c4332;
+  --t-text3: #48604d;
+  --t-gold300: #1b7a1c;
+  --t-gold400: #2f9a30;
   --t-mint300: #0b7e6b;
   --t-mint400: #0e9480;
   --t-coral300: #bf3d28;
   --t-coral400: #d64a33;
   --t-pb300: #6547d6;
-  --t-shadow: rgba(21, 42, 58, 0.18);
-  --t-pulse: rgba(179, 131, 10, 0.45);
-  --t-dot: rgba(70, 100, 120, 0.16);
+  --t-shadow: rgba(20, 40, 26, 0.18);
+  --t-pulse: rgba(30, 120, 40, 0.45);
+  --t-dot: rgba(60, 110, 70, 0.16);
 }
 
 @theme {
@@ -71,11 +71,11 @@ html.light {
   --color-cream-300: var(--t-text2);
   --color-cream-500: var(--t-text3);
 
-  --color-gold-200: #ffe7a3;
+  --color-gold-200: #cdf0c7;
   --color-gold-300: var(--t-gold300);
   --color-gold-400: var(--t-gold400);
-  --color-gold-500: #f0ac24;
-  --color-gold-600: #c98a12;
+  --color-gold-500: #36a937;
+  --color-gold-600: #217a24;
 
   --color-coral-300: var(--t-coral300);
   --color-coral-400: var(--t-coral400);
@@ -146,8 +146,8 @@ html.light {
     transition: background-color 0.35s ease, color 0.35s ease;
   }
   ::selection {
-    background: #ffc94d;
-    color: #0b161d;
+    background: #55d957;
+    color: #070f0a;
   }
   *::-webkit-scrollbar {
     width: 10px;
@@ -196,7 +196,7 @@ html.light {
     background-size: 22px 22px;
   }
   .bg-diag-gold {
-    background-image: repeating-linear-gradient(-45deg, rgba(255, 201, 77, 0.07) 0 12px, transparent 12px 26px);
+    background-image: repeating-linear-gradient(-45deg, rgba(54, 169, 55, 0.09) 0 12px, transparent 12px 26px);
   }
   .holo-sheen {
     position: relative;
@@ -210,7 +210,7 @@ html.light {
     background: linear-gradient(
       115deg,
       transparent 22%,
-      rgba(255, 217, 122, 0.16) 36%,
+      rgba(85, 217, 87, 0.18) 36%,
       rgba(79, 220, 192, 0.15) 46%,
       rgba(165, 131, 255, 0.17) 56%,
       transparent 72%

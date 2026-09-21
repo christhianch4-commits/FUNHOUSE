@@ -2,20 +2,24 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="/src/assets/habemus-juegos-logo.svg" />
+    <link rel="icon" href="/pwa-192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#060d12" />
-    <meta name="description" content="HABEMUS JUEGOS — tienda de juegos de mesa, rol y TCG en Quito y Guayaquil. Registra visitas, reclama premios y reserva productos." />
+    <meta name="theme-color" content="#070f0a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Panda Mangas" />
+    <meta name="description" content="Panda Mangas Ecuador — tienda otaku de manga, anime, Pokémon TCG y funkos en Quito. Registra visitas, reclama premios y reserva productos." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Unbounded:wght@500;600;700;800;900&display=swap" rel="stylesheet" />
-    <title>HABEMUS JUEGOS TCG · Quito — Pase de jugador y preventas</title>
+    <title>Panda Mangas Ecuador · Quito — Pase de jugador y preventas</title>
     <script>
       try {
         var light = localStorage.getItem("fh-theme") === "light";
         if (light) document.documentElement.classList.add("light");
         var meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute("content", light ? "#e7edf1" : "#060d12");
+        if (meta) meta.setAttribute("content", light ? "#eaf1ea" : "#070f0a");
       } catch (e) {}
     </script>
   </head>

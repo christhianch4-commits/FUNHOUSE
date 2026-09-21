@@ -7,20 +7,27 @@ import {
   Check,
   CircleDollarSign,
   Gift,
+  Megaphone,
   Minus,
   Package,
+  PiggyBank,
   Plus,
   ScanLine,
   Search,
   ShieldCheck,
+  ShoppingBag,
   Star,
   Ticket,
+  Trash2,
+  Upload,
   Users,
   Video,
   VideoOff,
+  X,
 } from "lucide-react";
 import { useStore } from "../lib/store";
 import {
+  cashbackFor,
   claimableCards,
   fmtUSD,
   productById,
@@ -30,11 +37,24 @@ import {
   type ResStatus,
   type User,
 } from "../lib/data";
-import { Avatar, confettiBurst, ProductImg, SectionHead, StarGlyph, StatusPill, useToast } from "../components/ui";
+import {
+  Avatar,
+  confettiBurst,
+  Modal,
+  PandaHeadGlyph,
+  ProductImg,
+  readAndCompressImage,
+  SectionHead,
+  StarGlyph,
+  StatusPill,
+  useToast,
+} from "../components/ui";
+import PromoCarousel from "../components/PromoCarousel";
 
 export default function AdminView({ tab }: { tab: string }) {
   if (tab === "jugadores") return <PlayersTab />;
-  if (tab === "reservas") return <ReservationsTab />;
+  if (tab === "tienda") return <StoreTab />;
+  if (tab === "banners") return <BannersTab />;
   if (tab === "resumen") return <SummaryTab />;
   return <ScanTab />;
 }
@@ -135,7 +155,7 @@ function ScanTab() {
             )}
           </div>
 
-          <div className="relative mt-4 aspect-[4/3] overflow-hidden rounded-lg border-2 border-ink-700 bg-[#060d12]">
+          <div className="relative mt-4 aspect-[4/3] overflow-hidden rounded-lg border-2 border-ink-700 bg-[#070f0a]">
             <video ref={videoRef} playsInline muted className="h-full w-full object-cover" />
 
             {/* esquinas de enfoque */}
@@ -150,11 +170,11 @@ function ScanTab() {
             )}
 
             {!scanning && (
-              <div className="bg-halftone absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#060d12]/92 p-6 text-center">
+              <div className="bg-halftone absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#070f0a]/92 p-6 text-center">
                 <span className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-dashed border-gold-500/60 bg-gold-500/10">
                   <Camera className="h-7 w-7 text-gold-400" />
                 </span>
-                <p className="max-w-[240px] text-sm text-[#9fbbc8]">
+                <p className="max-w-[240px] text-sm text-[#a0c9ac]">
                   El jugador muestra su pase QR y lo escaneas aquí. Sello al instante.
                 </p>
                 <button onClick={start} className="btn-gold">
@@ -214,8 +234,8 @@ function ScanTab() {
                         Visita #{result.user.visits} registrada
                       </div>
                     </div>
-                    <span className="ml-auto animate-stamp rounded-lg border-2 border-gold-500 bg-gradient-to-br from-gold-300 to-gold-500 p-2.5">
-                      <StarGlyph className="h-6 w-6 text-ink-950" />
+                    <span className="ml-auto animate-stamp rounded-lg border-2 border-gold-500 bg-gradient-to-br from-gold-300 to-gold-500 p-2">
+                      <PandaHeadGlyph className="h-8 w-8" />
                     </span>
                   </div>
                   <div className="mt-4 flex items-center gap-1.5">
@@ -326,6 +346,65 @@ function ScanTab() {
           </div>
         </div>
       </div>
+
+      <LoyaltyTiersPanel />
+    </div>
+  );
+}
+
+function LoyaltyTiersPanel() {
+  const { state, updateLoyaltyTierPrize } = useStore();
+  const { push } = useToast();
+  const [drafts, setDrafts] = useState<Record<number, string>>(() =>
+    Object.fromEntries(state.loyaltyTiers.map((t) => [t.stars, t.prize]))
+  );
+
+  const save = () => {
+    state.loyaltyTiers.forEach((t) => {
+      const val = drafts[t.stars]?.trim();
+      if (val) updateLoyaltyTierPrize(t.stars, val);
+    });
+    push("¡Premios de fidelidad actualizados!");
+  };
+
+  return (
+    <div className="card-tcg p-5">
+      <div className="text-[10px] font-bold tracking-[0.24em] text-gold-400 uppercase">Fidelidad</div>
+      <h3 className="font-display mt-1 text-lg font-bold text-cream-100">Premios por estrellas doradas</h3>
+      <p className="mt-1.5 text-xs text-ink-300">
+        Los jugadores ganan estrellas automáticamente según sus visitas acumuladas. Solo define el premio de cada
+        nivel.
+      </p>
+
+      <div className="mt-5 grid gap-4 sm:grid-cols-3">
+        {[...state.loyaltyTiers]
+          .sort((a, b) => a.stars - b.stars)
+          .map((t) => (
+            <div key={t.stars} className="card-flat p-4">
+              <div className="flex items-center justify-center gap-1">
+                {[1, 2, 3].map((i) => (
+                  <Star
+                    key={i}
+                    className={`h-5 w-5 ${i <= t.stars ? "fill-gold-400 text-gold-400" : "text-ink-600"}`}
+                  />
+                ))}
+              </div>
+              <div className="mt-2 text-center text-[11px] font-bold tracking-wide text-ink-400 uppercase">
+                Desde {t.visitsRequired} visitas
+              </div>
+              <input
+                className="input-fh mt-3 text-center text-sm"
+                value={drafts[t.stars] ?? ""}
+                onChange={(e) => setDrafts((d) => ({ ...d, [t.stars]: e.target.value }))}
+                placeholder="Nombre del premio"
+              />
+            </div>
+          ))}
+      </div>
+
+      <button onClick={save} className="btn-gold mt-5 w-full py-2.5">
+        Guardar premios de fidelidad
+      </button>
     </div>
   );
 }
@@ -333,9 +412,24 @@ function ScanTab() {
 /* ============================ Jugadores ============================ */
 
 function PlayersTab() {
-  const { state, adjustVisits, deliverReward } = useStore();
+  const { state, adjustVisits, deliverReward, addCashbackFromPurchase } = useStore();
   const { push } = useToast();
   const [q, setQ] = useState("");
+  const [cashbackTarget, setCashbackTarget] = useState<User | null>(null);
+  const [amount, setAmount] = useState("");
+
+  const confirmCashback = () => {
+    if (!cashbackTarget) return;
+    const purchase = Number(amount);
+    if (!purchase || purchase <= 0) {
+      push("Ingresa un monto de compra válido.", "err");
+      return;
+    }
+    const earned = addCashbackFromPurchase(cashbackTarget.id, purchase);
+    push(`+${fmtUSD(earned)} de cashback para ${cashbackTarget.name} (compra de ${fmtUSD(purchase)})`);
+    setCashbackTarget(null);
+    setAmount("");
+  };
 
   const players = useMemo(() => {
     const list = state.users.filter((u) => u.role === "player");
@@ -420,6 +514,17 @@ function PlayersTab() {
                 </button>
               </div>
 
+              <button
+                onClick={() => {
+                  setCashbackTarget(u);
+                  setAmount("");
+                }}
+                title="Registrar compra y sumar cashback"
+                className="chip shrink-0 cursor-pointer border-mint-500/50 bg-mint-500/10 text-mint-300 transition hover:border-mint-400 hover:bg-mint-500/15"
+              >
+                <PiggyBank className="h-3 w-3" /> {fmtUSD(u.cashbackBalance)}
+              </button>
+
               <div className="flex shrink-0 items-center gap-2 md:w-56 md:justify-end">
                 {pendingReward ? (
                   <>
@@ -448,6 +553,51 @@ function PlayersTab() {
           );
         })}
       </div>
+
+      <Modal open={!!cashbackTarget} onClose={() => setCashbackTarget(null)}>
+        {cashbackTarget && (
+          <div>
+            <div className="text-[10px] font-bold tracking-[0.24em] text-mint-400 uppercase">Registrar compra</div>
+            <div className="mt-3 flex items-center gap-3">
+              <Avatar user={cashbackTarget} size={44} />
+              <div>
+                <h3 className="font-display text-lg leading-tight font-bold text-cream-100">
+                  {cashbackTarget.name}
+                </h3>
+                <p className="mt-0.5 text-xs text-ink-400">
+                  Cashback actual: <b className="text-mint-300">{fmtUSD(cashbackTarget.cashbackBalance)}</b>
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <label className="label-fh">Monto de la compra (USD)</label>
+              <input
+                autoFocus
+                className="input-fh"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
+            </div>
+
+            <div className="mt-4 flex items-center justify-between rounded-lg border-2 border-mint-500/40 bg-mint-500/10 px-4 py-3">
+              <span className="text-sm font-semibold text-ink-300">Cashback automático (5%)</span>
+              <span className="font-display text-xl font-extrabold text-mint-300">
+                {fmtUSD(cashbackFor(Number(amount) || 0))}
+              </span>
+            </div>
+
+            <button onClick={confirmCashback} className="btn-mint mt-4 w-full py-3 text-base">
+              <Check className="h-4 w-4" strokeWidth={3} />
+              Registrar compra y cashback
+            </button>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
@@ -479,7 +629,7 @@ function ReservationsTab() {
   return (
     <div className="space-y-5">
       <SectionHead
-        label="Preventas"
+        label="Seguimiento"
         title="Reservas de producto"
         right={
           <span className="chip border-ink-600 bg-ink-850 text-ink-300">
@@ -512,7 +662,7 @@ function ReservationsTab() {
       ) : (
         <div className="grid gap-3">
           {list.map((r, i) => {
-            const p = productById(r.productId);
+            const p = productById(state.products, r.productId);
             return (
               <motion.div
                 key={r.id}
@@ -587,10 +737,370 @@ function ReservationsTab() {
   );
 }
 
+/* ============================ Tienda (productos + reservas) ============================ */
+
+function StoreTab() {
+  return (
+    <div className="space-y-10">
+      <ProductManager />
+      <ReservationsTab />
+    </div>
+  );
+}
+
+function ProductManager() {
+  const { state, createProduct, deleteProduct } = useStore();
+  const { push } = useToast();
+
+  const [name, setName] = useState("");
+  const [blurb, setBlurb] = useState("");
+  const [price, setPrice] = useState("");
+  const [stock, setStock] = useState("");
+  const [image, setImage] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBusy(true);
+    try {
+      setImage(await readAndCompressImage(file));
+    } catch {
+      push("No pudimos leer esa imagen. Prueba con otra foto.", "err");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const resetForm = () => {
+    setName("");
+    setBlurb("");
+    setPrice("");
+    setStock("");
+    setImage(null);
+    if (fileRef.current) fileRef.current.value = "";
+  };
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    const priceNum = Number(price);
+    const stockNum = Number(stock);
+    if (!name.trim()) return push("Ponle un nombre al producto.", "err");
+    if (!image) return push("Sube una foto del producto.", "err");
+    if (!priceNum || priceNum <= 0) return push("Ingresa un precio válido.", "err");
+    if (!stockNum || stockNum <= 0) return push("Ingresa un stock válido.", "err");
+    createProduct(name.trim(), blurb.trim(), priceNum, image, stockNum);
+    resetForm();
+    push("¡Producto agregado a la tienda!");
+  };
+
+  return (
+    <div className="space-y-5">
+      <SectionHead
+        label="Catálogo"
+        title="Productos de la tienda"
+        right={
+          <span className="chip border-ink-600 bg-ink-850 text-ink-300">
+            <ShoppingBag className="h-3 w-3" /> {state.products.length}
+          </span>
+        }
+      />
+
+      <form onSubmit={submit} className="card-tcg space-y-4 p-5">
+        <div className="text-[10px] font-bold tracking-[0.24em] text-gold-400 uppercase">Nuevo producto</div>
+
+        <div>
+          <label className="label-fh">Nombre</label>
+          <input
+            className="input-fh"
+            placeholder="Ej. Sobre Prize Pack 9"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <label className="label-fh">Descripción</label>
+          <textarea
+            className="input-fh min-h-[70px] resize-none"
+            placeholder="Cuenta qué trae el producto…"
+            value={blurb}
+            onChange={(e) => setBlurb(e.target.value)}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="label-fh">Precio (USD)</label>
+            <input
+              className="input-fh"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+            />
+          </div>
+          <div>
+            <label className="label-fh">Stock</label>
+            <input
+              className="input-fh"
+              type="number"
+              min="0"
+              step="1"
+              placeholder="0"
+              value={stock}
+              onChange={(e) => setStock(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="label-fh">Foto</label>
+          {image ? (
+            <div className="relative overflow-hidden rounded-lg border-2 border-ink-600">
+              <img src={image} alt="Vista previa" className="h-40 w-full object-cover" />
+              <button
+                type="button"
+                onClick={() => {
+                  setImage(null);
+                  if (fileRef.current) fileRef.current.value = "";
+                }}
+                aria-label="Quitar foto"
+                className="absolute top-2 right-2 cursor-pointer rounded-md border-2 border-ink-700 bg-ink-900/85 p-1.5 text-ink-200 transition hover:border-coral-500 hover:text-coral-300"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={busy}
+              className="btn-ghost w-full border-dashed py-6 disabled:opacity-60"
+            >
+              <Upload className="h-4 w-4" /> {busy ? "Procesando…" : "Subir foto"}
+            </button>
+          )}
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickFile} />
+        </div>
+
+        <p className="rounded-lg border border-ink-700 bg-ink-900 px-3 py-2.5 text-xs leading-relaxed text-ink-300">
+          El pago sigue el mismo método para todos los productos: transferencia o QR a la cuenta configurada en la
+          tienda — no necesitas configurarlo por producto.
+        </p>
+
+        <button type="submit" className="btn-gold w-full py-2.5">
+          Publicar producto
+        </button>
+      </form>
+
+      {state.products.length > 0 && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {state.products.map((p) => (
+            <div key={p.id} className="card-flat flex items-center gap-3 p-3">
+              <ProductImg
+                src={p.img}
+                fallback={p.fallback}
+                alt={p.name}
+                className="h-14 w-14 shrink-0 rounded-lg border-2 border-ink-700 bg-ink-900 object-cover"
+              />
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-bold text-cream-100">{p.name}</div>
+                <div className="text-xs text-ink-400">
+                  {fmtUSD(p.price)} · stock {p.stock}
+                </div>
+              </div>
+              <button
+                onClick={() => deleteProduct(p.id)}
+                aria-label="Eliminar producto"
+                className="cursor-pointer text-ink-400 transition hover:text-coral-400"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================ Banners ============================ */
+
+function BannersTab() {
+  return (
+    <div className="space-y-10">
+      <div className="space-y-5">
+        <SectionHead
+          label="Marketing"
+          title="Banners de la tienda"
+          right={
+            <span className="chip border-ink-600 bg-ink-850 text-ink-300">
+              <Megaphone className="h-3 w-3" /> promos · reservas · publicidad
+            </span>
+          }
+        />
+        <PromoCarousel />
+      </div>
+
+      <SplashPromoManager />
+    </div>
+  );
+}
+
+/* ============================ Promo del mes (splash de bienvenida) ============================ */
+
+function SplashPromoManager() {
+  const { state, updateSplashPromo } = useStore();
+  const { push } = useToast();
+  const { splashPromo } = state;
+
+  const [active, setActive] = useState(splashPromo.active);
+  const [title, setTitle] = useState(splashPromo.title);
+  const [subtitle, setSubtitle] = useState(splashPromo.subtitle);
+  const [image, setImage] = useState<string | null>(splashPromo.image);
+  const [busy, setBusy] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBusy(true);
+    try {
+      setImage(await readAndCompressImage(file, 1280, 0.85));
+    } catch {
+      push("No pudimos leer esa imagen. Prueba con otra foto.", "err");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const save = () => {
+    if (active && !image) {
+      push("Sube una imagen para activar la promo de bienvenida.", "err");
+      return;
+    }
+    updateSplashPromo(active, image, title.trim(), subtitle.trim());
+    push("¡Promo de bienvenida actualizada! La verán los jugadores al abrir la app.");
+  };
+
+  return (
+    <div className="space-y-5">
+      <SectionHead
+        label="Bienvenida"
+        title="Promo del mes / temporada"
+        right={
+          <span className={`chip ${active ? "border-mint-500/60 bg-mint-500/10 text-mint-300" : "border-ink-600 bg-ink-850 text-ink-300"}`}>
+            {active ? "Activa" : "Inactiva"}
+          </span>
+        }
+      />
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        <div className="card-tcg space-y-4 p-5">
+          <p className="text-xs leading-relaxed text-ink-300">
+            Esta imagen aparece como bienvenida la primera vez que un jugador abre la app después de que la
+            actualices — como el anuncio de promo del mes que se ve al entrar a una tienda online.
+          </p>
+
+          <label className="flex cursor-pointer items-center justify-between rounded-lg border-2 border-ink-600 bg-ink-900 px-3.5 py-2.5">
+            <span className="text-sm font-bold text-cream-100">Mostrar al abrir la app</span>
+            <input
+              type="checkbox"
+              checked={active}
+              onChange={(e) => setActive(e.target.checked)}
+              className="h-5 w-5 accent-gold-400"
+            />
+          </label>
+
+          <div>
+            <label className="label-fh">Título</label>
+            <input
+              className="input-fh"
+              placeholder="Ej. ¡Promo de septiembre!"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="label-fh">Descripción breve</label>
+            <textarea
+              className="input-fh min-h-[70px] resize-none"
+              placeholder="Ej. 20% OFF en figuras, funkos y TCG seleccionado"
+              value={subtitle}
+              onChange={(e) => setSubtitle(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="label-fh">Imagen de la promo</label>
+            {image ? (
+              <div className="relative overflow-hidden rounded-lg border-2 border-ink-600">
+                <img src={image} alt="Vista previa" className="h-48 w-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImage(null);
+                    if (fileRef.current) fileRef.current.value = "";
+                  }}
+                  aria-label="Quitar imagen"
+                  className="absolute top-2 right-2 cursor-pointer rounded-md border-2 border-ink-700 bg-ink-900/85 p-1.5 text-ink-200 transition hover:border-coral-500 hover:text-coral-300"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                disabled={busy}
+                className="btn-ghost w-full border-dashed py-6 disabled:opacity-60"
+              >
+                <Upload className="h-4 w-4" /> {busy ? "Procesando…" : "Subir imagen"}
+              </button>
+            )}
+            <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onPickFile} />
+          </div>
+
+          <button onClick={save} className="btn-gold w-full py-2.5">
+            Guardar promo de bienvenida
+          </button>
+        </div>
+
+        <div>
+          <div className="mb-2 text-[10px] font-bold tracking-[0.24em] text-ink-400 uppercase">
+            Vista previa · así la ven los jugadores
+          </div>
+          <div className="card-tcg holo-sheen mx-auto max-w-[280px] overflow-hidden p-0">
+            {image ? (
+              <img src={image} alt="Vista previa" className="h-64 w-full object-cover" />
+            ) : (
+              <div className="flex h-64 w-full items-center justify-center bg-ink-900 text-ink-500">
+                Sin imagen
+              </div>
+            )}
+            <div className="p-4">
+              <h3 className="font-display text-base font-extrabold text-cream-100">{title || "Título de la promo"}</h3>
+              {subtitle && <p className="mt-1 text-xs text-ink-300">{subtitle}</p>}
+              <div className="btn-gold mt-3 w-full py-2 text-xs">Ver en la tienda</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ============================ Resumen ============================ */
 
+const STORE_SALE_STATUSES: ResStatus[] = ["pago_confirmado", "listo_retiro", "entregado"];
+
 function SummaryTab() {
-  const { state } = useStore();
+  const { state, userName } = useStore();
 
   const players = state.users.filter((u) => u.role === "player");
   const totalVisits = players.reduce((a, u) => a + u.visits, 0);
@@ -600,6 +1110,14 @@ function SummaryTab() {
   const toVerify = state.reservations
     .filter((r) => r.status === "pago_por_verificar")
     .reduce((a, r) => a + r.total, 0);
+
+  const confirmedSales = state.reservations.filter((r) => STORE_SALE_STATUSES.includes(r.status));
+  const totalSales = confirmedSales.reduce((a, r) => a + r.total, 0);
+  const unitsSold = confirmedSales.reduce((a, r) => a + r.qty, 0);
+  const avgTicket = confirmedSales.length ? totalSales / confirmedSales.length : 0;
+  const recentStoreOrders = [...state.reservations]
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .slice(0, 6);
 
   const days = Array.from({ length: 7 }).map((_, i) => {
     const d = new Date();
@@ -615,7 +1133,7 @@ function SummaryTab() {
 
   return (
     <div className="space-y-6">
-      <SectionHead label="Panel de la tienda" title="Resumen Habemus Juegos" />
+      <SectionHead label="Panel de la tienda" title="Resumen Panda Mangas Ecuador" />
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Tile icon={<Users className="h-4 w-4 text-gold-400" />} label="Jugadores" value={String(players.length)} />
@@ -686,6 +1204,59 @@ function SummaryTab() {
               );
             })}
           </ul>
+        </div>
+      </div>
+
+      <div>
+        <SectionHead label="Tienda" title="Ventas y reservas en tienda" />
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <Tile
+            icon={<CircleDollarSign className="h-4 w-4 text-mint-400" />}
+            label="Ventas confirmadas"
+            value={fmtUSD(totalSales)}
+          />
+          <Tile
+            icon={<Ticket className="h-4 w-4 text-gold-400" />}
+            label="Reservas totales"
+            value={String(state.reservations.length)}
+          />
+          <Tile
+            icon={<ShoppingBag className="h-4 w-4 text-pb-300" />}
+            label="Unidades vendidas"
+            value={String(unitsSold)}
+          />
+          <Tile
+            icon={<Star className="h-4 w-4 text-coral-400" />}
+            label="Ticket promedio"
+            value={fmtUSD(avgTicket)}
+          />
+        </div>
+
+        <div className="card-tcg mt-5 p-5">
+          <span className="text-[10px] font-bold tracking-[0.24em] text-ink-300 uppercase">
+            Últimas órdenes en tienda
+          </span>
+          {recentStoreOrders.length === 0 ? (
+            <p className="mt-3 text-sm text-ink-400">Todavía no hay reservas en la tienda.</p>
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {recentStoreOrders.map((r) => {
+                const p = productById(state.products, r.productId);
+                return (
+                  <li
+                    key={r.id}
+                    className="flex flex-wrap items-center gap-3 rounded-lg border border-ink-800 bg-ink-900 px-3 py-2.5 text-sm"
+                  >
+                    <span className="min-w-0 flex-1 truncate text-cream-100">
+                      <b>{userName(r.userId)}</b> · {p?.name ?? "Producto"} × {r.qty}
+                    </span>
+                    <StatusPill status={r.status} />
+                    <span className="font-display font-bold text-gold-300">{fmtUSD(r.total)}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
         </div>
       </div>
     </div>

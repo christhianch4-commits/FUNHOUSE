@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import {
@@ -17,11 +17,7 @@ import {
   fmtUSD,
   PAYMENT,
   payQrPayload,
-  PB_BANNER,
-  PB_BANNER_FALLBACK,
   productById,
-  PRODUCTS,
-  STORE_INFO,
   shortDate,
   timeAgo,
   type Product,
@@ -29,30 +25,12 @@ import {
   type User,
 } from "../lib/data";
 import { confettiBurst, CopyBtn, Modal, ProductImg, SectionHead, StatusPill, useToast } from "../components/ui";
-
-/* ============================ Banner ============================ */
-
-function BannerImg() {
-  const [stage, setStage] = useState(0);
-  const sources = [PB_BANNER, PB_BANNER_FALLBACK];
-  if (stage >= sources.length) {
-    return <div className="h-56 w-full bg-gradient-to-br from-ink-700 via-ink-900 to-ink-950 sm:h-64" />;
-  }
-  return (
-    <img
-      src={sources[stage]}
-      alt="Mega Evolution — Pitch Black"
-      referrerPolicy="no-referrer"
-      onError={() => setStage((s) => s + 1)}
-      className="h-56 w-full object-cover sm:h-64"
-    />
-  );
-}
+import PromoCarousel from "../components/PromoCarousel";
 
 /* ============================ Tienda / preventa ============================ */
 
 export default function Shop({ user }: { user: User }) {
-  const { createReservation, setReservationStatus } = useStore();
+  const { state, createReservation, setReservationStatus } = useStore();
   const { push } = useToast();
   const [reserveFor, setReserveFor] = useState<Product | null>(null);
   const [qty, setQty] = useState(1);
@@ -81,31 +59,9 @@ export default function Shop({ user }: { user: User }) {
 
   return (
     <div className="space-y-8">
-      {/* Banner de preventa */}
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-xl border-2 border-ink-700 shadow-[8px_8px_0_0_var(--t-shadow)]"
-      >
-        <BannerImg />
-        <div className="absolute inset-0 bg-gradient-to-r from-ink-950 via-ink-950/72 to-transparent" />
-        <div className="absolute inset-0 flex flex-col justify-center gap-3 p-6 sm:p-8">
-          <div className="flex items-center gap-2">
-            <span className="chip animate-pulse-gold border-gold-500 bg-gold-400/15 text-gold-300">
-              <Zap className="h-3 w-3" /> Preventa activa
-            </span>
-            <span className="chip border-pb-400/60 bg-pb-400/10 text-pb-300">Llega en 2–3 semanas</span>
-            <span className="chip border-mint-500/60 bg-mint-500/10 text-mint-300">{STORE_INFO.freeShipping}</span>
-          </div>
-          <h1 className="font-display max-w-md text-2xl leading-tight font-extrabold text-cream-100 sm:text-4xl">
-            Mega Evolution
-            <br />
-            <span className="text-gold-400">Pitch Black</span>
-          </h1>
-          <p className="max-w-sm text-sm text-ink-300">
-            Reserva hoy con un toque, paga por transferencia o QR y retira en tienda. {STORE_INFO.events}.
-          </p>
-        </div>
+      {/* Banner giratorio: promos, reservas y publicidad de producto */}
+      <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
+        <PromoCarousel />
       </motion.div>
 
       {/* Cómo funciona */}
@@ -130,12 +86,18 @@ export default function Shop({ user }: { user: User }) {
       {/* Catálogo */}
       <div>
         <SectionHead
-          label="Preventa Pitch Black"
-          title="Productos de la expansión"
-          right={<span className="chip border-ink-600 bg-ink-850 text-ink-300">{PRODUCTS.length} productos</span>}
+          label="Catálogo"
+          title="Productos disponibles"
+          right={<span className="chip border-ink-600 bg-ink-850 text-ink-300">{state.products.length} productos</span>}
         />
+        {state.products.length === 0 ? (
+          <div className="card-flat flex flex-col items-center gap-2 px-6 py-14 text-center">
+            <Package className="h-8 w-8 text-ink-500" />
+            <p className="text-sm font-semibold text-ink-300">Todavía no hay productos publicados.</p>
+          </div>
+        ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {PRODUCTS.map((p, i) => (
+          {state.products.map((p, i) => (
             <motion.div
               key={p.id}
               initial={{ opacity: 0, y: 18 }}
@@ -151,12 +113,12 @@ export default function Shop({ user }: { user: User }) {
                   className="h-full w-full object-contain p-3 transition-transform duration-500 group-hover:scale-[1.06]"
                 />
                 {p.tag && (
-                  <span className="chip absolute top-2.5 left-2.5 border-gold-500 bg-[#060d12]/80 text-[#ffd97a] backdrop-blur-sm">
+                  <span className="chip absolute top-2.5 left-2.5 border-gold-500 bg-[#070f0a]/80 text-[#86e089] backdrop-blur-sm">
                     {p.tag}
                   </span>
                 )}
                 {p.stock <= 5 && (
-                  <span className="chip absolute right-2.5 bottom-2.5 border-coral-500 bg-[#060d12]/80 text-[#ffa196] backdrop-blur-sm">
+                  <span className="chip absolute right-2.5 bottom-2.5 border-coral-500 bg-[#070f0a]/80 text-[#ffa196] backdrop-blur-sm">
                     ¡Últimas {p.stock}!
                   </span>
                 )}
@@ -186,6 +148,7 @@ export default function Shop({ user }: { user: User }) {
             </motion.div>
           ))}
         </div>
+        )}
       </div>
 
       {/* Modal de reserva */}
@@ -254,7 +217,8 @@ export default function Shop({ user }: { user: User }) {
 /* ============================ Hoja de pago ============================ */
 
 export function PaymentSheet({ res, onPaid }: { res: Reservation; onPaid: () => void }) {
-  const product = productById(res.productId);
+  const { state } = useStore();
+  const product = productById(state.products, res.productId);
   return (
     <div>
       <div className="text-[10px] font-bold tracking-[0.24em] text-gold-400 uppercase">Datos de pago</div>
@@ -321,9 +285,13 @@ const STEPS = [
 ] as const;
 
 export function MyReservations({ user, onGoShop }: { user: User; onGoShop: () => void }) {
-  const { state, setReservationStatus } = useStore();
+  const { state, setReservationStatus, markReservationsSeen } = useStore();
   const { push } = useToast();
   const [payRes, setPayRes] = useState<Reservation | null>(null);
+
+  useEffect(() => {
+    markReservationsSeen(user.id);
+  }, [user.id, markReservationsSeen]);
 
   const mine = state.reservations
     .filter((r) => r.userId === user.id)
@@ -354,14 +322,14 @@ export function MyReservations({ user, onGoShop }: { user: User; onGoShop: () =>
           <Package className="h-9 w-9 text-ink-500" />
           <p className="text-sm font-semibold text-ink-300">Todavía no tienes reservas.</p>
           <button onClick={onGoShop} className="btn-gold">
-            Explorar la preventa Pitch Black
+            Explorar la tienda
             <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
           </button>
         </div>
       ) : (
         <div className="grid gap-4">
           {mine.map((r, i) => {
-            const p = productById(r.productId);
+            const p = productById(state.products, r.productId);
             const idx = r.status === "entregado" ? 4 : STEPS.findIndex((s) => s.key === r.status);
             return (
               <motion.div

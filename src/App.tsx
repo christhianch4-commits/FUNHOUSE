@@ -2,7 +2,9 @@ import { lazy, Suspense, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   BarChart3,
+  GalleryHorizontal,
   LogOut,
+  Megaphone,
   Package,
   QrCode,
   ScanLine,
@@ -23,7 +25,9 @@ import {
 } from "./components/ui";
 import AuthView from "./views/AuthView";
 import PlayerView from "./views/PlayerView";
-import { STORE_INFO } from "./lib/data";
+import NewsView from "./views/NewsView";
+import SplashPromoModal from "./components/SplashPromo";
+import { claimableCards, hasNewsBadge, hasReservationBadge, STORE_INFO } from "./lib/data";
 
 const AdminView = lazy(() => import("./views/AdminView"));
 
@@ -35,16 +39,26 @@ interface TabDef {
 
 const PLAYER_TABS: TabDef[] = [
   { key: "pase", label: "Mi Pase", icon: <QrCode className="h-[18px] w-[18px]" strokeWidth={2.4} /> },
-  { key: "tienda", label: "Preventas", icon: <Package className="h-[18px] w-[18px]" strokeWidth={2.4} /> },
+  { key: "tienda", label: "Tienda", icon: <Package className="h-[18px] w-[18px]" strokeWidth={2.4} /> },
   { key: "reservas", label: "Mis Reservas", icon: <Ticket className="h-[18px] w-[18px]" strokeWidth={2.4} /> },
+  { key: "noticias", label: "Noticias", icon: <Megaphone className="h-[18px] w-[18px]" strokeWidth={2.4} /> },
 ];
 
 const ADMIN_TABS: TabDef[] = [
   { key: "scan", label: "Escanear", icon: <ScanLine className="h-[18px] w-[18px]" strokeWidth={2.4} /> },
   { key: "jugadores", label: "Jugadores", icon: <Users className="h-[18px] w-[18px]" strokeWidth={2.4} /> },
-  { key: "reservas", label: "Reservas", icon: <Ticket className="h-[18px] w-[18px]" strokeWidth={2.4} /> },
+  { key: "tienda", label: "Tienda", icon: <Package className="h-[18px] w-[18px]" strokeWidth={2.4} /> },
+  { key: "banners", label: "Banners", icon: <GalleryHorizontal className="h-[18px] w-[18px]" strokeWidth={2.4} /> },
+  { key: "noticias", label: "Noticias", icon: <Megaphone className="h-[18px] w-[18px]" strokeWidth={2.4} /> },
   { key: "resumen", label: "Resumen", icon: <BarChart3 className="h-[18px] w-[18px]" strokeWidth={2.4} /> },
 ];
+
+const NAV_COLS: Record<number, string> = {
+  3: "grid-cols-3",
+  4: "grid-cols-4",
+  5: "grid-cols-5",
+  6: "grid-cols-6",
+};
 
 function Ambient() {
   return (
@@ -63,11 +77,20 @@ function Ambient() {
 }
 
 function Shell() {
-  const { currentUser, logout } = useStore();
+  const { currentUser, state, logout } = useStore();
   const [tab, setTab] = useState("pase");
 
   const isAdmin = currentUser?.role === "admin";
   const tabs = isAdmin ? ADMIN_TABS : PLAYER_TABS;
+
+  const badges: Record<string, boolean> =
+    !isAdmin && currentUser
+      ? {
+          pase: claimableCards(currentUser) > 0,
+          reservas: hasReservationBadge(currentUser, state.reservations),
+          noticias: hasNewsBadge(currentUser, state.news),
+        }
+      : {};
 
   useEffect(() => {
     setTab(currentUser?.role === "admin" ? "scan" : "pase");
@@ -77,32 +100,44 @@ function Shell() {
 
   return (
     <div className="relative z-10 min-h-screen">
+      <SplashPromoModal onGoShop={() => setTab("tienda")} />
+
       {/* Header */}
       <header className="sticky top-0 z-40 border-b-2 border-ink-800 bg-ink-950/88 backdrop-blur-md">
-        <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3">
-          <Wordmark compact />
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
+          <div className="shrink-0">
+            <Wordmark compact />
+          </div>
 
-          <nav className="ml-auto hidden items-center gap-1.5 md:flex">
+          <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 md:flex xl:gap-1.5">
             {tabs.map((t) => (
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className={`flex cursor-pointer items-center gap-2 rounded-lg border-2 px-3.5 py-2 text-xs font-bold transition ${
+                title={t.label}
+                className={`relative flex shrink-0 cursor-pointer items-center gap-2 rounded-lg border-2 px-2.5 py-2 text-xs font-bold whitespace-nowrap transition xl:px-3.5 ${
                   tab === t.key
                     ? "border-gold-600 bg-gold-400 text-ink-950 shadow-[3px_3px_0_0_var(--t-shadow)]"
                     : "border-ink-700 bg-ink-850/60 text-ink-300 hover:border-ink-500 hover:text-cream-100"
                 }`}
               >
                 {t.icon}
-                {t.label}
+                <span className="hidden xl:inline">{t.label}</span>
+                {badges[t.key] && (
+                  <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-coral-400 ring-2 ring-ink-950" />
+                )}
               </button>
             ))}
           </nav>
 
-          <div className="ml-auto flex items-center gap-2.5 md:ml-3">
-            <div className="hidden text-right sm:block">
-              <div className="text-xs leading-tight font-bold text-cream-100">{currentUser.name}</div>
-              <div className={`text-[10px] font-bold tracking-[0.18em] uppercase ${isAdmin ? "text-coral-300" : "text-mint-300"}`}>
+          <div className="flex shrink-0 items-center gap-2.5">
+            <div className="hidden max-w-[160px] text-right lg:block">
+              <div className="truncate text-xs leading-tight font-bold whitespace-nowrap text-cream-100">
+                {currentUser.name}
+              </div>
+              <div
+                className={`truncate text-[10px] font-bold tracking-[0.18em] whitespace-nowrap uppercase ${isAdmin ? "text-coral-300" : "text-mint-300"}`}
+              >
                 {isAdmin ? "Admin tienda" : "Jugador"}
               </div>
             </div>
@@ -130,7 +165,9 @@ function Shell() {
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
           >
-            {isAdmin ? (
+            {tab === "noticias" ? (
+              <NewsView />
+            ) : isAdmin ? (
               <Suspense
                 fallback={
                   <div className="flex justify-center py-24">
@@ -151,7 +188,7 @@ function Shell() {
         <footer className="mt-14 flex flex-wrap items-center justify-between gap-3 border-t-2 border-ink-800 pt-6 text-xs text-ink-500">
           <span className="flex items-center gap-2">
             <Zap className="h-3.5 w-3.5 text-gold-400" />
-            HABEMUS JUEGOS · {STORE_INFO.locations}
+            PANDA MANGAS ECUADOR · {STORE_INFO.locations}
           </span>
           <span>{STORE_INFO.catalog} · {STORE_INFO.events}</span>
         </footer>
@@ -159,7 +196,7 @@ function Shell() {
 
       {/* Nav móvil */}
       <nav className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-ink-800 bg-ink-900/95 backdrop-blur-md md:hidden">
-        <div className={`mx-auto grid max-w-md ${tabs.length === 4 ? "grid-cols-4" : "grid-cols-3"}`}>
+        <div className={`mx-auto grid max-w-md ${NAV_COLS[tabs.length] ?? "grid-cols-4"}`}>
           {tabs.map((t) => (
             <button
               key={t.key}
@@ -174,7 +211,12 @@ function Shell() {
                   className="absolute top-0 h-0.5 w-8 rounded-full bg-gold-400"
                 />
               )}
-              {t.icon}
+              <span className="relative">
+                {t.icon}
+                {badges[t.key] && (
+                  <span className="absolute -top-0.5 -right-1 h-2 w-2 rounded-full bg-coral-400 ring-2 ring-ink-900" />
+                )}
+              </span>
               {t.label}
             </button>
           ))}
